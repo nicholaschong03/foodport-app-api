@@ -14,6 +14,7 @@ from rest_framework import serializers
 from django.utils.translation import gettext as _
 
 
+
 class UserSerializer(serializers.ModelSerializer):
     """Serializer for the user object"""
 
@@ -61,3 +62,6 @@ class AuthTokenSerializer(serializers.Serializer):
 
         attrs["user"] = user
         return attrs
+
+        #create and save token
+
