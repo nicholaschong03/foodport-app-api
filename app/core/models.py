@@ -29,7 +29,7 @@ def post_image_file_path(instance, filename):
 class UserManager(BaseUserManager):
     """Manager for user."""
 
-    def create_user(self, email, username="", password=None, **extra_field):
+    def create_user(self, email, username, password=None, **extra_field):
         """Create, save and return a new user"""
         if not email:
             raise ValueError("User must have an email address")
