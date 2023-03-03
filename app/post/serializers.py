@@ -31,7 +31,7 @@ class PostDetailSerializer(PostSerializer):
         fields = PostSerializer.Meta.fields + ["postRatingDelicious",
                                                "postRatingEatAgain",
                                                "postRatingWorthIt",
-                                               "postPhotoUrl",
+                                               "postPhoto",
                                                "dishId",
                                                "postPublishIpAddress",
                                                "postView",
@@ -49,6 +49,6 @@ class PostImageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ["id", "postPhotoUrl"]
+        fields = ["id", "postPhoto"]
         read_only_fields = ["id"]
-        extra_kwargs = {"postPhotoUrl": {"required": "True"}}
+        extra_kwargs = {"postPhoto": {"required": "True"}}
