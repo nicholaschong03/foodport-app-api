@@ -125,6 +125,18 @@ class ModelTests(TestCase):
         """Test generating image path"""
         uuid = "test-uuid",
         mock_uuid.return_value = uuid
-        file_path = models.post_image_file_path(None, "example.jpg")
+        user = get_user_model().objects.create(
+            email = "test@example.com",
+            password = "testpass123",
+            username = "username1123"
+        )
+        post = models.Post.objects.create(
+            user=user,
+            postReview = 5,
+            postRatingDelicious = 5,
+            postRatingEatAgain = 5,
+            postRatingWorthIt = 5
+        )
+        file_path = models.post_image_file_path(post, "example.jpg")
 
-        self.assertEqual(file_path, f"uploads/post/{uuid}.jpg")
+        self.assertEqual(file_path, f"uploads/posts/user{user.id}/images/{uuid}.jpg")

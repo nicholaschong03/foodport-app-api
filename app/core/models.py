@@ -20,9 +20,12 @@ from django.contrib.auth.models import (
 def post_image_file_path(instance, filename):
     """Genrate file path for new recipe image."""
     ext = os.path.splitext(filename)[1]
+    if ext == ".jpg" or ext == ".png" or ext == ".jpeg":
+        user_directory_path = f"uploads/posts/user{instance.user.id}/images"
+    elif ext == ".mp4" or ext == ".avi":
+        user_directory_path = f"uploads/posts/user{instance.user.id}/videos"
     filename = f"{uuid.uuid4()}{ext}"
-
-    return os.path.join("uploads", "post", filename)
+    return os.path.join(user_directory_path, filename)
 
 
 
