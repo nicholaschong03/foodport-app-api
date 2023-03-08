@@ -94,7 +94,7 @@ class Post(models.Model):
     postPublishIpAddress = models.CharField(max_length=255, blank=True)
     dishId= models.CharField(max_length=255, blank=True)
     userId = models.CharField(max_length=255, blank=True)
-    postPhoto = models.ImageField(null=True, upload_to=post_image_file_path)
+    postPhotoUrl = models.ImageField(null=True, upload_to=post_image_file_path)
     postView = models.JSONField(default=dict, blank=True)
     postLike = models.JSONField(default=dict, blank=True)
     postComment = models.JSONField(default=dict, blank=True)

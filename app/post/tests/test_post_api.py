@@ -115,7 +115,7 @@ class PrivatePostApiTests(TestCase):
         res = self.client.post(POSTS_URL, payload)
 
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-        post = Post.objects.get(id=res.data['id'])
+        post = Post.objects.get(id=res.data['postId'])
         for k, v in payload.items():
             self.assertEqual(getattr(post, k), v)
         self.assertEqual(post.user, self.user)
@@ -223,7 +223,7 @@ class ImageUploadTests(TestCase):
         self.post = create_post(user=self.user)
 
     def tearDown(self):
-        self.post.postPhoto.delete()
+        self.post.postPhotoUrl.delete()
 
 
     def test_upload_image(self):
@@ -233,18 +233,18 @@ class ImageUploadTests(TestCase):
             img = Image.new("RGB", (10,10))
             img.save(image_file, format="JPEG")
             image_file.seek(0)
-            payload = {"postPhoto": image_file}
+            payload = {"postPhotoUrl": image_file}
             res = self.client.post(url, payload, format="multipart")
 
         self.post.refresh_from_db()
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertIn("postPhoto", res.data)
-        self.assertTrue(os.path.exists(self.post.postPhoto.path))
+        self.assertIn("postPhotoUrl", res.data)
+        self.assertTrue(os.path.exists(self.post.postPhotoUrl.path))
 
     def test_upload_image_bad_request(self):
         """Test uploading invalid image"""
         url = image_upload_url(self.post.id)
-        payload = {"postPhoto": "notanimage"}
+        payload = {"postPhotoUrl": "notanimage"}
         res = self.client.post(url, payload, format="multipart")
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)

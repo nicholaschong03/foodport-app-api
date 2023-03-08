@@ -9,11 +9,12 @@ class PostSerializer(serializers.ModelSerializer):
     """Serializer for Post"""
     postPublishDateTime = serializers.SerializerMethodField()
     userId = serializers.ReadOnlyField(source="user.id")
+    postId = serializers.ReadOnlyField(source="id")
 
     class Meta:
         model = Post
         fields = [
-            "id",
+            "postId",
             "userId",
             "postReview",
             "postPublishDateTime"
@@ -31,7 +32,7 @@ class PostDetailSerializer(PostSerializer):
         fields = PostSerializer.Meta.fields + ["postRatingDelicious",
                                                "postRatingEatAgain",
                                                "postRatingWorthIt",
-                                               "postPhoto",
+                                               "postPhotoUrl",
                                                "dishId",
                                                "postPublishIpAddress",
                                                "postView",
@@ -49,6 +50,6 @@ class PostImageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ["id", "postPhoto"]
+        fields = ["id", "postPhotoUrl"]
         read_only_fields = ["id"]
-        extra_kwargs = {"postPhoto": {"required": "True"}}
+        extra_kwargs = {"postPhotoUrl": {"required": "True"}}
