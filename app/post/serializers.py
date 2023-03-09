@@ -17,7 +17,22 @@ class PostSerializer(serializers.ModelSerializer):
             "postId",
             "userId",
             "postReview",
-            "postPublishDateTime"
+            "postPublishDateTime",
+            "postRatingDelicious",
+            "postRatingEatAgain",
+            "postRatingWorthIt",
+            "postPhotoUrl",
+            "dishId",
+            "postPublishIpAddress",
+            "postView",
+            "postLike",
+            "postComment",
+            "postCommentView",
+            "postSave",
+            "postDishSellerVisit",
+            "postDishVisit",
+            "postView",
+            "postShare",
         ]
         read_only_fields = ["id", "userId", "postPublishDateTime"]
 
@@ -29,21 +44,7 @@ class PostDetailSerializer(PostSerializer):
     """Serializer for post detail view"""
 
     class Meta(PostSerializer.Meta):
-        fields = PostSerializer.Meta.fields + ["postRatingDelicious",
-                                               "postRatingEatAgain",
-                                               "postRatingWorthIt",
-                                               "postPhotoUrl",
-                                               "dishId",
-                                               "postPublishIpAddress",
-                                               "postView",
-                                               "postLike",
-                                               "postComment",
-                                               "postCommentView",
-                                               "postSave",
-                                               "postDishSellerVisit",
-                                               "postDishVisit",
-                                               "postView",
-                                               "postShare",]
+        fields = PostSerializer.Meta.fields
 
 class PostImageSerializer(serializers.ModelSerializer):
     """Serializer for uploading images to reipes"""
