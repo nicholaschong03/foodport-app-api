@@ -37,7 +37,7 @@ class PostSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "userId", "postPublishDateTime"]
 
     def get_postPublishDateTime(self, obj):
-        return obj.postPublishDateTime.strftime("%d-%m-%Y %H:%M")
+        return obj.postPublishDateTime.isoformat()
 
 
 class PostDetailSerializer(PostSerializer):
