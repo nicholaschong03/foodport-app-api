@@ -18,7 +18,7 @@ from django.contrib.auth.models import (
 )
 
 def post_image_file_path(instance, filename):
-    """Genrate file path for new recipe image."""
+    """Genrate file path for new post image."""
     ext = os.path.splitext(filename)[1]
     if ext == ".jpg" or ext == ".png" or ext == ".jpeg":
         user_directory_path = f"uploads/posts/user{instance.user.id}/images"
@@ -26,6 +26,13 @@ def post_image_file_path(instance, filename):
         user_directory_path = f"uploads/posts/user{instance.user.id}/videos"
     filename = f"{uuid.uuid4()}{ext}"
     return os.path.join(user_directory_path, filename)
+
+def user_image_file_path(instance, filename):
+    """Generate file path for new """
+    ext = os.path.splitext(filename)[1]
+    directory_path = f"uploads/profiles/user{instance.id}/picture"
+    filename = f"{uuid.uuid4()}{ext}"
+    return os.path.join(directory_path, filename)
 
 
 
@@ -60,11 +67,26 @@ class User(AbstractBaseUser, PermissionsMixin):
     name = models.CharField(max_length=255, blank=True)
     # phone_num = PhoneNumberField(unique=True, blank=True, null=True,
     #                             validators=[UniqueValidator(message="Phone Number already exists.")])
-    phone_num = PhoneNumberField(unique=True, blank=True, null=True)
+    userPhoneNumber = PhoneNumberField(unique=True, blank=True, null=True)
     username = models.CharField(max_length=255, unique=True)
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
+    userBio = models.TextField(blank=True)
+    userProfilePictureUrl = models.ImageField(null=True, upload_to=user_image_file_path)
+    userBirthDate = models.DateField(blank=True, null=True)
+    userAccountRegisterDate = models.DateTimeField(auto_now_add=True)
+    userPostLike = models.JSONField(default=dict, blank=True)
+    userPostComment = models.JSONField(default=dict, blank=True)
+    userPostSave = models.JSONField(default=dict, blank=True)
+    userPostShare = models.JSONField(default=dict, blank=True)
+    userPostView = models.JSONField(default=dict, blank=True)
+    userPostCommentView = models.JSONField(default=dict, blank=True)
+    userPostDishVisit = models.JSONField(default=dict, blank=True)
+    userPostDishSellerVisit = models.JSONField(default=dict, blank=True)
+
+
+
 
     objects = UserManager()
 
@@ -93,7 +115,6 @@ class Post(models.Model):
         error_messages={"blank": "Please provide a rating from 1 to 5"})
     postPublishIpAddress = models.CharField(max_length=255, blank=True)
     dishId= models.IntegerField(null=True, blank=True, default=0)
-    userId = models.CharField(max_length=255, blank=True)
     postPhotoUrl = models.ImageField(null=True, upload_to=post_image_file_path)
     postView = models.JSONField(default=dict, blank=True)
     postLike = models.JSONField(default=dict, blank=True)

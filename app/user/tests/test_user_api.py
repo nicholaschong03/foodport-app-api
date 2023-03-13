@@ -5,10 +5,21 @@ from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
 from rest_framework import status
 
+import tempfile
+import os
+
+from PIL import Image
+
 CREATE_USER_URL = reverse("user:create")
 TOKEN_URL = reverse("user:token")
 ME_URL = reverse("user:me")
 LOGOUT_URL = reverse("user:logout")
+IMAGE_URL = reverse("user:upload_profile_image")
+
+
+def detail_url(user_id):
+    """Create and return the URL for retrieving a user's profile"""
+    return reverse("user:other_user", args=[user_id])
 
 
 def create_user(**params):
@@ -28,7 +39,7 @@ class PublicUserApiTests(TestCase):
             "email": "test@example.com",
             "password": "testpass123",
             "name": "Test Name",
-            "phone_num": "+60123456789",
+            "userPhoneNumber": "+60123456789",
             "username": "Test username",
                 }
         res = self.client.post(CREATE_USER_URL, payload)
@@ -45,7 +56,7 @@ class PublicUserApiTests(TestCase):
             "password": "testpass123",
             "username": "Test username",
             "name": "Test Name",
-            "phone_num": "+60123456789",
+            "userPhoneNumber": "+60123456789",
 
         }
         create_user(**payload)
@@ -60,7 +71,7 @@ class PublicUserApiTests(TestCase):
             "email": "test@example.com",
             "password": "pw",
             "name": "Test name",
-            "phone_num": "+60123456789",
+            "userPhoneNumber": "+60123456789",
             "username": "Test username"
         }
         res = self.client.post(CREATE_USER_URL, payload)
@@ -77,7 +88,7 @@ class PublicUserApiTests(TestCase):
             "name": "Test Name",
             "email": "test@example.com",
             "password": "test-user-password123",
-            "phone_num": "+60123456789",
+            "userPhoneNumber": "+60123456789",
             "username": "Test username"
         }
         create_user(**user_details)
@@ -95,7 +106,7 @@ class PublicUserApiTests(TestCase):
         """Test returns error if credentials invalid"""
         create_user(email="test@example.com",
                     password="goodpass",
-                    phone_num="+60123456789",
+                    userPhoneNumber="+60123456789",
                     username="test username"
                     )
 
@@ -134,7 +145,7 @@ class PrivateUserApiTest(TestCase):
             email="test@example.com",
             password="testpass123",
             name="Test Name",
-            phone_num="+60123456789",
+            userPhoneNumber="+60123456789",
             username = "test username"
         )
         self.client = APIClient()
@@ -146,12 +157,31 @@ class PrivateUserApiTest(TestCase):
         res = self.client.get(ME_URL)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(res.data, {
+        self.assertDictContainsSubset({
             "name": self.user.name,
             "email": self.user.email,
-            "phone_num": self.user.phone_num,
+            "userPhoneNumber": self.user.userPhoneNumber,
             "username": self.user.username
-        })
+        }, res.data)
+
+    def test_retrieve_other_profile_success(self):
+        """Test retrieving other users' profile"""
+        other_user = create_user(
+            email="user0@example.com",
+            password = "user0password",
+            name = "user0name",
+            userPhoneNumber = "+601234567890",
+            username = "user0username"
+        )
+        url = detail_url(other_user.id)
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertDictContainsSubset({
+            "name": other_user.name,
+            "email": other_user.email,
+            "userPhoneNumber": other_user.userPhoneNumber,
+            "username": other_user.username
+        }, res.data)
 
     def test_post_me_not_allowed(self):
         """Test POST is not allowed for the ME endpoint"""
@@ -177,4 +207,38 @@ class PrivateUserApiTest(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data, {"message": "Successfully logged out"})
         self.assertFalse(Token.objects.filter(user=self.user).exists())
+
+
+class ImageUploadTests(TestCase):
+    """Test for the profile picture upload API"""
+
+    def setUp(self):
+        self.user = create_user(
+            email="test@example.com",
+            password="testpass123",
+            name="Test Name",
+            userPhoneNumber="+60123456789",
+            username = "test username"
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
+
+    def tearDown(self):
+        self.user.userProfilePictureUrl.delete()
+
+    def test_upload_image(self):
+        """Test uploading an image to a post"""
+        with tempfile.NamedTemporaryFile(suffix=".jpg") as image_file:
+            img = Image.new("RGB", (10,10))
+            img.save(image_file, format="JPEG")
+            image_file.seek(0)
+            payload = {"userProfilePictureUrl": image_file}
+            res = self.client.post(IMAGE_URL, payload, format="multipart")
+
+        self.user.refresh_from_db()
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn("userProfilePictureUrl", res.data)
+        self.assertTrue(os.path.exists(self.user.userProfilePictureUrl.path))
+
+
 

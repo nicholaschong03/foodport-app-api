@@ -37,7 +37,7 @@ class ModelTests(TestCase):
         ]
         for i, (email, expected) in enumerate(sample_emails):
             user = get_user_model().objects.create_user(
-                email = email, password = "sample123", phone_num=f"1234567890{i}", username=f"exampleuser{i}")
+                email = email, password = "sample123", userPhoneNumber=f"1234567890{i}", username=f"exampleuser{i}")
             self.assertEqual(user.email, expected)
 
     def test_create_user_with_unique_phone_number(self):
@@ -45,7 +45,7 @@ class ModelTests(TestCase):
         user1 = get_user_model().objects.create_user(
             email="test1@example.com",
             password="testpass123",
-            phone_num="+16502530000",
+            userPhoneNumber="+16502530000",
             username = "username1",
         )
 
@@ -53,7 +53,7 @@ class ModelTests(TestCase):
             get_user_model().objects.create_user(
                 email="test2@example.com",
                 password="testpass123",
-                phone_num=user1.phone_num,
+                userPhoneNumber=user1.userPhoneNumber,
                 username = "username2"
             )
 
@@ -67,7 +67,7 @@ class ModelTests(TestCase):
         user1 = get_user_model().objects.create_user(
             email=email1,
             password = password,
-            phone_num = "+16502530000",
+            userPhoneNumber = "+16502530000",
             username=username
         )
 
@@ -75,7 +75,7 @@ class ModelTests(TestCase):
             user2 = get_user_model().objects.create_user(
                 email = email2,
                 password = password,
-                phone_num = "+16502530001",
+                userPhoneNumber = "+16502530001",
                 username=username
             )
 

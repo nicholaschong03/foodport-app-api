@@ -81,7 +81,7 @@ class PrivatePostApiTests(TestCase):
         other_user = create_user(
             email="other@example.com",
             password="password123",
-            phone_num="+60123456789",
+            userPhoneNumber="+60123456789",
             username = "otherusername"
         )
         create_post(user=other_user)
@@ -174,7 +174,7 @@ class PrivatePostApiTests(TestCase):
         """Test changing the post user results in an error"""
         new_user = create_user(email="user2@example.com",
                                password="test123",
-                               phone_num="0123456843",
+                               userPhoneNumber="0123456843",
                                username = "username1")
         post = create_post(user=self.user)
 
@@ -199,7 +199,7 @@ class PrivatePostApiTests(TestCase):
         """Test trying to delete another users post gives error"""
         new_user = create_user(email="user2@example.com",
                                password="test123",
-                               phone_num="0123456843",
+                               userPhoneNumber="0123456843",
                                username = "username1")
         post = create_post(user=new_user)
         url = detail_url(post.id)
