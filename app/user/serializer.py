@@ -21,6 +21,7 @@ class UserSerializer(serializers.ModelSerializer):
     """Serializer for the user object"""
     userIPAddress = serializers.SerializerMethodField()
     userPostId = serializers.SerializerMethodField()
+    userId = serializers.ReadOnlyField(source="id")
 
     class Meta:
         model = get_user_model()
@@ -29,6 +30,7 @@ class UserSerializer(serializers.ModelSerializer):
                   "username",
                   "name",
                   "userPhoneNumber",
+                  "userId",
                   "userBio",
                   "userProfilePictureUrl",
                   "userBirthDate",
