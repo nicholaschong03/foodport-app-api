@@ -14,16 +14,16 @@ class AdminSiteTest(TestCase):
         """Create user and clients"""
         self.client = Client()
         self.admin_user = get_user_model().objects.create_superuser(
-            email = "chong@example.com",
+            userEmailAddress = "chong@example.com",
             password = "12345"
         )
         self.client.force_login(self.admin_user)
         self.user = get_user_model().objects.create_user(
-            email="user@example.com",
+            userEmailAddress="user@example.com",
             password = "testpass123",
             userPhoneNumber = "0123456788",
-            name = "Test User ",
-            username = "sample username"
+            userName = "Test User ",
+            userUsername = "sample username"
         )
 
     def test_users_list(self):
@@ -31,8 +31,8 @@ class AdminSiteTest(TestCase):
         url = reverse("admin:core_user_changelist")
         res = self.client.get(url)
 
-        self.assertContains(res, self.user.name)
-        self.assertContains(res, self.user.email)
+        self.assertContains(res, self.user.userName)
+        self.assertContains(res, self.user.userEmailAddress)
 
     def test_edit_user_page(self):
         """Test the edit user page works"""

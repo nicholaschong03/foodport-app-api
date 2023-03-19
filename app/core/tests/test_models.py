@@ -16,15 +16,15 @@ class ModelTests(TestCase):
 
     def test_create_user_with_email_successful(self):
         """Test creating a user with an email is successful."""
-        email = "test@example.com"
+        userEmailAddress = "test@example.com"
         password = "testpass123"
         user = get_user_model().objects.create_user(
-            email=email,
+            userEmailAddress=userEmailAddress,
             password=password,
-            username = "usernameexample"
+            userUsername = "usernameexample"
         )
 
-        self.assertEqual(user.email, email)
+        self.assertEqual(user.userEmailAddress, userEmailAddress)
         self.assertTrue(user.check_password(password))
 
     def test_new_user_email_normalized(self):
@@ -35,48 +35,48 @@ class ModelTests(TestCase):
             ["TEST3@EXAMPLE.COM", "TEST3@example.com"],
             ["test4@example.COM", "test4@example.com"]
         ]
-        for i, (email, expected) in enumerate(sample_emails):
+        for i, (userEmailAddress, expected) in enumerate(sample_emails):
             user = get_user_model().objects.create_user(
-                email = email, password = "sample123", userPhoneNumber=f"1234567890{i}", username=f"exampleuser{i}")
-            self.assertEqual(user.email, expected)
+                userEmailAddress = userEmailAddress, password = "sample123", userPhoneNumber=f"1234567890{i}", userUsername=f"exampleuser{i}")
+            self.assertEqual(user.userEmailAddress, expected)
 
     def test_create_user_with_unique_phone_number(self):
         """Test creating a user with a unique phone nubmer"""
         user1 = get_user_model().objects.create_user(
-            email="test1@example.com",
+            userEmailAddress="test1@example.com",
             password="testpass123",
             userPhoneNumber="+16502530000",
-            username = "username1",
+            userUsername = "username1",
         )
 
         with self.assertRaises(IntegrityError):
             get_user_model().objects.create_user(
-                email="test2@example.com",
+                userEmailAddress="test2@example.com",
                 password="testpass123",
                 userPhoneNumber=user1.userPhoneNumber,
-                username = "username2"
+                userUsername = "username2"
             )
 
     def test_create_user_with_unique_username(self):
         """Test creating a user with a unique username """
-        username = "testuser"
+        userUsername = "testuser"
         email1 = "test1@example.com"
         email2 = "test2@example.com"
         password = "testpass123"
 
         user1 = get_user_model().objects.create_user(
-            email=email1,
+            userEmailAddress=email1,
             password = password,
             userPhoneNumber = "+16502530000",
-            username=username
+            userUsername=userUsername
         )
 
         with self.assertRaises(IntegrityError):
             user2 = get_user_model().objects.create_user(
-                email = email2,
+                userEmailAddress = email2,
                 password = password,
                 userPhoneNumber = "+16502530001",
-                username=username
+                userUsername=userUsername
             )
 
 
@@ -90,9 +90,9 @@ class ModelTests(TestCase):
         """Test that creating a user without an username raises a ValueError"""
         with self.assertRaises(ValueError):
             get_user_model().objects.create_user(
-                email = "test1@example.com",
+                userEmailAddress = "test1@example.com",
                 password = "testpass123",
-                username =""
+                userUsername =""
             )
 
 
@@ -106,9 +106,9 @@ class ModelTests(TestCase):
     def test_create_post(self):
         """Test creating a post is successful"""
         user = get_user_model().objects.create_user(
-            email = "test@example.com",
+            userEmailAddress = "test@example.com",
             password = "testpass123",
-            username = "username1123"
+            userUsername = "username1123"
         )
         post = models.Post.objects.create(
             user = user,
@@ -126,9 +126,9 @@ class ModelTests(TestCase):
         uuid = "test-uuid",
         mock_uuid.return_value = uuid
         user = get_user_model().objects.create(
-            email = "test@example.com",
+            userEmailAddress = "test@example.com",
             password = "testpass123",
-            username = "username1123"
+            userUsername = "username1123"
         )
         post = models.Post.objects.create(
             user=user,

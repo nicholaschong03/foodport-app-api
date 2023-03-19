@@ -39,21 +39,21 @@ def user_image_file_path(instance, filename):
 class UserManager(BaseUserManager):
     """Manager for user."""
 
-    def create_user(self, email, username="", password=None, **extra_field):
+    def create_user(self, userEmailAddress, userUsername="", password=None, **extra_field):
         """Create, save and return a new user"""
-        if not email:
+        if not userEmailAddress:
             raise ValueError("User must have an email address")
-        if not username:
+        if not userUsername:
             raise ValueError("User must have a username")
-        user = self.model(email=self.normalize_email(email), username=username, **extra_field)
+        user = self.model(userEmailAddress=self.normalize_email(userEmailAddress), userUsername=userUsername, **extra_field)
         user.set_password(password)
         user.save(using=self._db)
 
         return user
 
-    def create_superuser(self, email, password):
+    def create_superuser(self, userEmailAddress, password):
         """Create and return a new superuser."""
-        user = self.create_user(email=email, password=password, username="admin")
+        user = self.create_user(userEmailAddress=userEmailAddress, password=password, userUsername="admin")
         user.is_staff = True
         user.is_superuser = True
         user.save(using=self.db)
@@ -63,12 +63,10 @@ class UserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     """User in the system."""
-    email = models.EmailField(max_length=255, unique=True)
-    name = models.CharField(max_length=255, blank=True)
-    # phone_num = PhoneNumberField(unique=True, blank=True, null=True,
-    #                             validators=[UniqueValidator(message="Phone Number already exists.")])
+    userEmailAddress = models.EmailField(max_length=255, unique=True)
+    userName = models.CharField(max_length=255, blank=True)
     userPhoneNumber = PhoneNumberField(unique=True, blank=True, null=True)
-    username = models.CharField(max_length=255, unique=True)
+    userUsername = models.CharField(max_length=255, unique=True)
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
@@ -90,7 +88,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     objects = UserManager()
 
-    USERNAME_FIELD = "email"
+    USERNAME_FIELD = "userEmailAddress"
 
 
 class Post(models.Model):
@@ -113,7 +111,7 @@ class Post(models.Model):
         validators=[MinValueValidator(1), MaxValueValidator(5)],
         blank=False,
         error_messages={"blank": "Please provide a rating from 1 to 5"})
-    postPublishIpAddress = models.CharField(max_length=255, blank=True)
+    postPublishIpAddress = models.GenericIPAddressField(null=True, blank=True)
     dishId= models.IntegerField(null=True, blank=True, default=0)
     postPhotoUrl = models.ImageField(null=True, upload_to=post_image_file_path)
     postView = models.JSONField(default=dict, blank=True)

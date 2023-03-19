@@ -10,6 +10,7 @@ class PostSerializer(serializers.ModelSerializer):
     postPublishDateTime = serializers.SerializerMethodField()
     userId = serializers.ReadOnlyField(source="user.id")
     postId = serializers.ReadOnlyField(source="id")
+    postPublishIpAddress = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
@@ -38,6 +39,9 @@ class PostSerializer(serializers.ModelSerializer):
 
     def get_postPublishDateTime(self, obj):
         return obj.postPublishDateTime.isoformat()
+
+    def get_postPublishIpAddress(self, obj):
+        return obj.postPublishIpAddress
 
 
 class PostDetailSerializer(PostSerializer):

@@ -33,8 +33,8 @@ class PostViewset(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """Create a new post"""
-        serializer.save(user=self.request.user)
-
+        postPublishIpAddress = self.request.META.get("REMOTE_ADDR")
+        serializer.save(user=self.request.user, postPublishIpAddress=postPublishIpAddress)
 
     @action(methods=["POST"], detail=True, url_path="upload-image")
     def upload_image(self, request, pk=None):

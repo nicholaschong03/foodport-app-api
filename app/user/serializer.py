@@ -25,10 +25,10 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = get_user_model()
-        fields = ["email",
+        fields = ["userEmailAddress",
                   "password",
-                  "username",
-                  "name",
+                  "userUsername",
+                  "userName",
                   "userPhoneNumber",
                   "userId",
                   "userBio",
@@ -80,13 +80,12 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_userPostId(self,obj):
         """Method to get the list of postId related to the user"""
-        #return Post.objects.filter(user=obj).values_list('id', flat=True)
         posts = Post.objects.filter(user=obj)
         return [post.id for post in posts]
 
 class AuthTokenSerializer(serializers.Serializer):
     """Serializer for the user auth token."""
-    email = serializers.EmailField()
+    userEmailAddress = serializers.EmailField()
     password = serializers.CharField(
         style = {"input_type": "password"},
         trim_whitespace=False
@@ -94,11 +93,11 @@ class AuthTokenSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         """Validate and authenticate the user."""
-        email = attrs.get("email")
+        userEmailAddress = attrs.get("userEmailAddress")
         password = attrs.get("password")
         user = authenticate(
             request=self.context.get("request"),
-            username=email,
+            username=userEmailAddress,
             password=password,
         )
         if not user:

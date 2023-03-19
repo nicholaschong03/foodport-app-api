@@ -62,7 +62,7 @@ class PrivatePostApiTests(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.user = create_user(email="user@example.com", password="test123", username="username03")
+        self.user = create_user(userEmailAddress="user@example.com", password="test123", userUsername="username03")
         self.client.force_authenticate(self.user)
 
     def test_retrieve_posts(self):
@@ -79,10 +79,10 @@ class PrivatePostApiTests(TestCase):
     def test_post_list_limited_to_user(self):
         """Test list of posts is limited to authenticated user."""
         other_user = create_user(
-            email="other@example.com",
+            userEmailAddress="other@example.com",
             password="password123",
             userPhoneNumber="+60123456789",
-            username = "otherusername"
+            userUsername = "otherusername"
         )
         create_post(user=other_user)
         create_post(user=self.user)
@@ -172,10 +172,10 @@ class PrivatePostApiTests(TestCase):
 
     def test_update_user_returns_error(self):
         """Test changing the post user results in an error"""
-        new_user = create_user(email="user2@example.com",
+        new_user = create_user(userEmailAddress="user2@example.com",
                                password="test123",
                                userPhoneNumber="0123456843",
-                               username = "username1")
+                               userUsername = "username1")
         post = create_post(user=self.user)
 
         payload = {"user": new_user.id}
@@ -197,10 +197,10 @@ class PrivatePostApiTests(TestCase):
 
     def test_post_other_users_post_error(self):
         """Test trying to delete another users post gives error"""
-        new_user = create_user(email="user2@example.com",
+        new_user = create_user(userEmailAddress="user2@example.com",
                                password="test123",
                                userPhoneNumber="0123456843",
-                               username = "username1")
+                               userUsername = "username1")
         post = create_post(user=new_user)
         url = detail_url(post.id)
         res = self.client.delete(url)
@@ -215,9 +215,9 @@ class ImageUploadTests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = get_user_model().objects.create_user(
-            email="user@example.com",
+            userEmailAddress="user@example.com",
             password = "password123",
-            username = "example username"
+            userUsername = "example username"
         )
         self.client.force_authenticate(self.user)
         self.post = create_post(user=self.user)
