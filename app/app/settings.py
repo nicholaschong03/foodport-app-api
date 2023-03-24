@@ -50,6 +50,9 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "user",
     "corsheaders",
+    "post",
+    "seller",
+    "dish",
 ]
 
 MIDDLEWARE = [

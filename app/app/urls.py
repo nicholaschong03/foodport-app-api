@@ -32,6 +32,8 @@ urlpatterns = [
     ),
     path("api/v1/user/", include("user.urls")),
     path("api/v1/", include("post.urls")),
+    path("api/v1/", include("seller.urls")),
+    path("api/v1/", include("dish.urls")),
 ]
 
 if settings.DEBUG:

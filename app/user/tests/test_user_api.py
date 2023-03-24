@@ -29,7 +29,7 @@ def create_user(**params):
 
 class PublicUserApiTests(TestCase):
     """Test the public fatures of the user API"""
-
+    
     def setUP(self):
         self.client = APIClient()
 

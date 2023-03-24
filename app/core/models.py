@@ -39,12 +39,20 @@ def user_image_file_path(instance, filename):
 class UserManager(BaseUserManager):
     """Manager for user."""
 
+    def _generate_unique_username(self):
+        """Generating a unique username by checking against existing usernames"""
+        while True:
+            username = str(uuid.uuid4())[:8]
+            if not self.model.objects.filter(userUsername=username).exists():
+                return username
+
+
     def create_user(self, userEmailAddress, userUsername="", password=None, **extra_field):
         """Create, save and return a new user"""
         if not userEmailAddress:
             raise ValueError("User must have an email address")
         if not userUsername:
-            raise ValueError("User must have a username")
+            userUsername = self._generate_unique_username()
         user = self.model(userEmailAddress=self.normalize_email(userEmailAddress), userUsername=userUsername, **extra_field)
         user.set_password(password)
         user.save(using=self._db)
@@ -54,6 +62,7 @@ class UserManager(BaseUserManager):
     def create_superuser(self, userEmailAddress, password):
         """Create and return a new superuser."""
         user = self.create_user(userEmailAddress=userEmailAddress, password=password, userUsername="admin")
+        user.set_password(password)
         user.is_staff = True
         user.is_superuser = True
         user.save(using=self.db)
@@ -82,6 +91,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     userPostCommentView = models.JSONField(default=dict, blank=True)
     userPostDishVisit = models.JSONField(default=dict, blank=True)
     userPostDishSellerVisit = models.JSONField(default=dict, blank=True)
+    userLikes = models.IntegerField(blank=True, null=True)
+    userFollowers = models.IntegerField(blank=True, null=True)
+    userFollowing = models.IntegerField(blank=True, null=True)
+    userFriends = models.IntegerField(blank=True, null=True)
+    userAge = models.IntegerField(blank=True, null=True)
+    userLocation = models.CharField(max_length=255, blank=True)
 
 
 
@@ -123,7 +138,41 @@ class Post(models.Model):
     postDishSellerVisit = models.JSONField(default=dict, blank=True)
     postDishVisit = models.JSONField(default=dict, blank=True)
 
-
-
     def __str__(self):
         return self.postReview
+
+class Seller(models.Model):
+    """Seller object"""
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+    sellerName = models.CharField(max_length=255)
+    sellerOperatingLocation = models.CharField(max_length=255)
+    sellerOperatingTime = models.DateTimeField(blank=True, null=True)
+    sellerVerified = models.BooleanField(default=False)
+    sellerSafeFood = models.BooleanField(default=False)
+    sellerHalal = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.sellerName
+
+class Dish(models.Model):
+    """Dish object"""
+    dishName = models.CharField(max_length=255)
+    dishPrice = models.DecimalField(max_digits=10, decimal_places=2)
+    dishMainIngredient = models.TextField(blank=True)
+    dishIngredient = models.TextField(blank=True)
+    dishNutrition = models.TextField(blank=True)
+    # seller = models.ForeignKey(
+    #     Seller,
+    #     on_delete=models.CASCADE
+    # )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        null=True
+    )
+    sellerId = models.IntegerField(null=True, blank=True)
+    postId = models.IntegerField(null=True, blank=True)
+    dishInfoContributor = models.JSONField(default=dict, blank=True)
