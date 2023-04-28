@@ -2,7 +2,7 @@
 Views for the post APIs.
 """
 
-from rest_framework import viewsets,status
+from rest_framework import viewsets,status, generics
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.authentication import TokenAuthentication
@@ -47,3 +47,50 @@ class PostViewset(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods = ["GET"], url_path="followers-latest-posts")
+    def followers_latest_posts(self, request):
+        user = self.request.user
+        followers = user.followers.all()
+        queryset = Post.objects.filter(user__in = user.following.all()).order_by('-postPublishDateTime')
+        page = self.paginate_queryset(queryset)
+
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class LikePostView(generics.GenericAPIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        post_id = kwargs.get('post_id')
+        try:
+            post = Post.objects.get(pk=post_id)
+        except Post.DoesNotExist:
+            return Response({"detail": "Post not found"})
+        user = request.user
+
+        if user in post.postLike.all():
+            post.postLike.remove(user)
+            return Response({"message": "Post unliked"}, status=status.HTTP_200_OK)
+        else:
+            post.postLike.add(user)
+            return Response({"message": "Post liked"}, status=status.HTTP_200_OK)
+
+class PostLikesListView(generics.ListAPIView):
+    serializer_class = serializers.UsersListSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        post_id = self.kwargs["post_id"]
+        try:
+            post = Post.objects.get(pk=post_id)
+        except Post.DoesNotExist:
+            return Response({"detail": "Post not found"})
+        return post.postLike.all()

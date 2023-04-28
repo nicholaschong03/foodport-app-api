@@ -7,13 +7,18 @@ class SellerSerializer(serializers.ModelSerializer):
     sellerId = serializers.ReadOnlyField(source="id")
     class Meta:
         model = Seller
-        fields = ["sellerName",
+        fields = [
                   "sellerId",
+                  "sellerBusinessName",
                   "sellerOperatingLocation",
                   "sellerOperatingTime",
                   "sellerVerified",
                   "sellerSafeFood",
-                  "sellerHalal",]
+                  "sellerHalal",
+                  "sellerInfoContributor",
+                  "dishId",
+                  "sellerOwnerId",]
+
 
 class SellerDetailSerializer(SellerSerializer):
     """Seriailzer for seller detail view"""

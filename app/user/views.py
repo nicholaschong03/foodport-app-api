@@ -2,14 +2,17 @@
 Views for the user API.
 """
 
-from rest_framework import generics, authentication, permissions
+from rest_framework import generics, authentication, permissions, views
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.settings import api_settings
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.authtoken.models import Token
+from rest_framework import filters
 from django.http import Http404
-from user.serializer import UserSerializer, AuthTokenSerializer, UserProfileImageSerializer
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.pagination import PageNumberPagination
+from user.serializer import UserSerializer, AuthTokenSerializer, UserProfileImageSerializer, UsersListSerializer
 from core.models import User
 from rest_framework import status
 from django.conf import settings
@@ -92,6 +95,21 @@ class RetrieveUserView(generics.RetrieveAPIView):
         # return serializer.data
         return user
 
+class CustomUserPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = "page_size"
+    max_page_size = 100
+
+class UserListView(generics.ListAPIView):
+    queryset = User.objects.all().order_by("userName")
+    serializer_class = UsersListSerializer
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    search_fields = ["userName", "userUsername"]
+    pagination_class = CustomUserPagination
+
+
 class LogoutView(generics.GenericAPIView):
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
@@ -100,3 +118,52 @@ class LogoutView(generics.GenericAPIView):
         """Remove the authentication token associated with the current user"""
         request.user.auth_token.delete()
         return Response({"message": "Successfully logged out"})
+
+class FollowUserView(views.APIView):
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, user_id):
+        try:
+            user_to_follow = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if request.user == user_to_follow:
+            return Response({"error": "User cannot follow themselves"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if user_to_follow in request.user.following.all():
+            request.user.following.remove(user_to_follow)
+            return Response({"status": "unfollowed"}, status=status.HTTP_200_OK)
+        else:
+            request.user.following.add(user_to_follow)
+            return Response({"status": "followed"}, status=status.HTTP_200_OK)
+
+class FollowersListView(generics.ListAPIView):
+    serializer_class = UsersListSerializer
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user_id = self.kwargs["user_id"]
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            raise Http404("User not found")
+        return user.followers.all()
+
+class FollowingListView(generics.ListAPIView):
+    serializer_class = UsersListSerializer
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user_id = self.kwargs["user_id"]
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            raise Http404("User not found")
+        return user.following.all()
+
+
+

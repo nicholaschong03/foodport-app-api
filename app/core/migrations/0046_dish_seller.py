@@ -28,7 +28,7 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('sellerName', models.CharField(max_length=255)),
                 ('sellerOperatingLocation', models.CharField(max_length=255)),
-                ('sellerOperatingTime', models.DateTimeField(blank=True, null=True)),
+                ('sellerOperatingTime', models.JSONField(blank=True, null=True)),
                 ('sellerVerified', models.BooleanField(default=False)),
                 ('sellerSafeFood', models.BooleanField(default=False)),
                 ('sellerHalal', models.BooleanField(default=False)),

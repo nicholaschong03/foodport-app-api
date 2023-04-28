@@ -15,6 +15,7 @@ TOKEN_URL = reverse("user:token")
 ME_URL = reverse("user:me")
 LOGOUT_URL = reverse("user:logout")
 IMAGE_URL = reverse("user:upload_profile_image")
+USER_LIST_URL = reverse("user:user_list")
 
 
 def detail_url(user_id):
@@ -29,7 +30,7 @@ def create_user(**params):
 
 class PublicUserApiTests(TestCase):
     """Test the public fatures of the user API"""
-    
+
     def setUP(self):
         self.client = APIClient()
 
@@ -208,6 +209,175 @@ class PrivateUserApiTest(TestCase):
         self.assertEqual(res.data, {"message": "Successfully logged out"})
         self.assertFalse(Token.objects.filter(user=self.user).exists())
 
+    def test_user_list_view(self):
+        """Test retrieving a list of users"""
+        create_user(
+            userEmailAddress = "user1@example.com",
+            password = "testpass112233",
+            userName = "Test Name",
+            userPhoneNumber = "+60123456766",
+            userUsername = "user1username"
+        )
+        res = self.client.get(USER_LIST_URL)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data["results"]), 2)
+
+    def test_user_list_search(self):
+        """Test searching for a user"""
+        other_user = create_user(
+            userEmailAddress = "user1@example.com",
+            password = "testpass112233",
+            userName = "Test Name",
+            userPhoneNumber = "+60123456766",
+            userUsername = "user1username"
+        )
+
+        res = self.client.get(USER_LIST_URL, {"search": "user1username"})
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data["results"]),1)
+        self.assertEqual(res.data["results"][0]["userUsername"], other_user.userUsername)
+
+        res = self.client.get(USER_LIST_URL, {"search": "Test Name"})
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data["results"]), 2)
+
+    def test_follow_user(self):
+        """Test following a user"""
+        other_user = create_user(
+            userEmailAddress = "user1@example.com",
+            password = "testpass112233",
+            userName = "Test Name",
+            userPhoneNumber = "+60123456543",
+            userUsername = "user1username"
+        )
+
+        # other_user2 = create_user(
+        #     userEmailAddress = "user2@example.com",
+        #     password = "testpass112233",
+        #     userName = "Test Name2",
+        #     userPhoneNumber = "+60123456763",
+        #     userUsername = "user2username"
+        # )
+        #other_user2.following.add(other_user)
+        url = reverse("user:follow_user", args=[other_user.id])
+        res = self.client.post(url)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data["status"], "followed")
+        self.assertTrue(other_user in self.user.following.all())
+
+    def test_unfollow_user(self):
+        """Test unfollowing user"""
+        other_user = create_user(
+            userEmailAddress = "user1@example.com",
+            password = "testpass112233",
+            userName = "Test Name",
+            userPhoneNumber = "+60123456543",
+            userUsername = "user1username"
+        )
+        self.user.following.add(other_user)
+        url = reverse("user:follow_user", args=[other_user.id])
+        res = self.client.post(url)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data["status"], "unfollowed")
+        self.assertFalse(other_user in self.user.following.all())
+
+    def test_follow_self(self):
+        """test folling user ownself"""
+        other_user = create_user(
+            userEmailAddress = "user1@example.com",
+            password = "testpass112233",
+            userName = "Test Name",
+            userPhoneNumber = "+60123456543",
+            userUsername = "user1username"
+        )
+        url = reverse("user:follow_user", args=[self.user.id])
+        res = self.client.post(url)
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(res.data["error"], "User cannot follow themselves")
+
+    def test_retrieve_followers(self):
+        """Test retrieving a list of followers"""
+        other_user = create_user(
+            userEmailAddress = "user1@example.com",
+            password = "testpass112233",
+            userName = "Test Name",
+            userPhoneNumber = "+60123456543",
+            userUsername = "user1username"
+        )
+
+        other_user1 = create_user(
+            userEmailAddress = "user2@example.com",
+            password = "testpass112233",
+            userName = "Test Name 1",
+            userPhoneNumber = "+60123456634",
+            userUsername = "user2username"
+        )
+
+        other_user.following.add(self.user)
+        other_user1.following.add(self.user)
+        url = reverse("user:followers_list", args=[self.user.id])
+        res = self.client.get(url)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data),2)
+        self.assertEqual(res.data[0]["userUsername"], other_user.userUsername)
+        self.assertEqual(res.data[1]["userUsername"], other_user1.userUsername)
+
+    def test_retrieve_followings(self):
+        """Test retrieving a following list"""
+        other_user = create_user(
+            userEmailAddress = "user1@example.com",
+            password = "testpass112233",
+            userName = "Test Name",
+            userPhoneNumber = "+60123456543",
+            userUsername = "user1username"
+        )
+
+        other_user1 = create_user(
+            userEmailAddress = "user2@example.com",
+            password = "testpass112233",
+            userName = "Test Name 1",
+            userPhoneNumber = "+60123456634",
+            userUsername = "user2username"
+        )
+
+        self.user.following.add(other_user, other_user1)
+        url = reverse("user:following_list", kwargs={"user_id": self.user.id})
+        res = self.client.get(url)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data),2)
+        self.assertEqual(res.data[0]["userUsername"], other_user.userUsername)
+        self.assertEqual(res.data[1]["userUsername"], other_user1.userUsername)
+
+    def test_retrieving_user_followers_following_counts(self):
+        """Test retrieving a user with followers and following count"""
+        other_user = create_user(
+            userEmailAddress = "user1@example.com",
+            password = "testpass112233",
+            userName = "Test Name",
+            userPhoneNumber = "+60123456543",
+            userUsername = "user1username"
+        )
+        self.user.following.add(other_user)
+        url = detail_url(other_user.id)
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data["followers_count"], 1)
+        self.assertEqual(res.data["following_count"],0)
+
+        res = self.client.get(ME_URL)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data["followers_count"], 0)
+        self.assertEqual(res.data["following_count"],1)
+
+
+
+
+
+
 
 class ImageUploadTests(TestCase):
     """Test for the profile picture upload API"""
@@ -239,6 +409,9 @@ class ImageUploadTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertIn("userProfilePictureUrl", res.data)
         self.assertTrue(os.path.exists(self.user.userProfilePictureUrl.path))
+
+
+
 
 
 

@@ -22,6 +22,9 @@ class UserSerializer(serializers.ModelSerializer):
     userIPAddress = serializers.SerializerMethodField()
     userPostId = serializers.SerializerMethodField()
     userId = serializers.ReadOnlyField(source="id")
+    followers_count = serializers.SerializerMethodField()
+    following_count = serializers.SerializerMethodField()
+
 
     class Meta:
         model = get_user_model()
@@ -33,6 +36,8 @@ class UserSerializer(serializers.ModelSerializer):
                   "userId",
                   "userBio",
                   "userProfilePictureUrl",
+                  "followers_count",
+                  "following_count",
                   "userBirthDate",
                   "userAccountRegisterDate",
                   "userIPAddress",
@@ -84,6 +89,12 @@ class UserSerializer(serializers.ModelSerializer):
         posts = Post.objects.filter(user=obj)
         return [post.id for post in posts]
 
+    def get_followers_count(self, obj):
+        return obj.followers.count()
+
+    def get_following_count(self, obj):
+        return obj.following.count()
+
 class AuthTokenSerializer(serializers.Serializer):
     """Serializer for the user auth token."""
     userEmailAddress = serializers.EmailField()
@@ -115,5 +126,12 @@ class UserProfileImageSerializer(serializers.ModelSerializer):
         fields = ["id", "userProfilePictureUrl"]
         read_only_fields = ["id"]
         extra_kwargs = {"userProfilePictureUrl": {"required":"True"}}
+
+class UsersListSerializer(serializers.ModelSerializer):
+    """Serializer for retrieving a list of users"""
+    userId = serializers.ReadOnlyField(source="id")
+    class Meta:
+        model = User
+        fields = ["userId", "userUsername", "userName", "userProfilePictureUrl"]
 
 

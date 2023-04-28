@@ -28,7 +28,7 @@ def post_image_file_path(instance, filename):
     return os.path.join(user_directory_path, filename)
 
 def user_image_file_path(instance, filename):
-    """Generate file path for new """
+    """Generate file path for profile"""
     ext = os.path.splitext(filename)[1]
     directory_path = f"uploads/profiles/user{instance.id}/picture"
     filename = f"{uuid.uuid4()}{ext}"
@@ -69,12 +69,18 @@ class UserManager(BaseUserManager):
 
         return user
 
+class NullablePhoneNumberField(PhoneNumberField):
+    """Allow userPhoneNumber field to be null and unique"""
+    def get_prep_value(self, value):
+        value = super().get_prep_value(value)
+        return value if value else None
+
 
 class User(AbstractBaseUser, PermissionsMixin):
     """User in the system."""
     userEmailAddress = models.EmailField(max_length=255, unique=True)
     userName = models.CharField(max_length=255, blank=True)
-    userPhoneNumber = PhoneNumberField(unique=True, blank=True, null=True)
+    userPhoneNumber = NullablePhoneNumberField(unique=True, blank=True, null=True)
     userUsername = models.CharField(max_length=255, unique=True)
 
     is_active = models.BooleanField(default=True)
@@ -97,6 +103,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     userFriends = models.IntegerField(blank=True, null=True)
     userAge = models.IntegerField(blank=True, null=True)
     userLocation = models.CharField(max_length=255, blank=True)
+    following = models.ManyToManyField("self", symmetrical=False, related_name="followers", blank=True)
 
 
 
@@ -130,13 +137,14 @@ class Post(models.Model):
     dishId= models.IntegerField(null=True, blank=True, default=0)
     postPhotoUrl = models.ImageField(null=True, upload_to=post_image_file_path)
     postView = models.JSONField(default=dict, blank=True)
-    postLike = models.JSONField(default=dict, blank=True)
+    #postLike = models.JSONField(default=dict, blank=True)
     postComment = models.JSONField(default=dict, blank=True)
     postCommentView = models.JSONField(default=dict, blank=True)
     postSave = models.JSONField(default=dict, blank=True)
     postShare = models.JSONField(default=dict, blank=True)
     postDishSellerVisit = models.JSONField(default=dict, blank=True)
     postDishVisit = models.JSONField(default=dict, blank=True)
+    postLike = models.ManyToManyField(User, related_name="liked_post", blank=True)
 
     def __str__(self):
         return self.postReview
@@ -147,15 +155,18 @@ class Seller(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
     )
-    sellerName = models.CharField(max_length=255)
-    sellerOperatingLocation = models.CharField(max_length=255)
-    sellerOperatingTime = models.DateTimeField(blank=True, null=True)
+    sellerBusinessName = models.CharField(max_length=255)
+    sellerOperatingLocation = models.JSONField(null=True, blank=True)
+    sellerOperatingTime = models.JSONField(null=True, blank=True)
     sellerVerified = models.BooleanField(default=False)
     sellerSafeFood = models.BooleanField(default=False)
     sellerHalal = models.BooleanField(default=False)
+    sellerOwnerId = models.IntegerField(null=True, blank=True, default=0)
+    sellerInfoContributor = models.JSONField(null=True, blank=True)
+    dishId = models.IntegerField(null=True, blank=True, default=0)
 
     def __str__(self):
-        return self.sellerName
+        return self.sellerBusinessName
 
 class Dish(models.Model):
     """Dish object"""

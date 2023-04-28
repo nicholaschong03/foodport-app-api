@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     "post",
     "seller",
     "dish",
+    #"django_filter",
 ]
 
 MIDDLEWARE = [

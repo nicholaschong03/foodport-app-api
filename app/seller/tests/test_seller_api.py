@@ -25,7 +25,7 @@ def create_user(**params):
 def create_seller(user, **params):
     """Create adn retrun sample sellers"""
     defaults = {
-        "sellerName": "sample name",
+        "sellerBusinessName": "sample name",
         "sellerOperatingLocation": "Kuala Lumpur",
         "sellerSafeFood": True,
         "sellerVerified" : False,
@@ -97,8 +97,8 @@ class PrivateSellerAPITests(TestCase):
     def test_create_seller(self):
         """Test creating a seller"""
         payload = {
-            "sellerName": "Restaurant Alex",
-            "sellerOperatingLocation": "Selangor",
+            "sellerBusinessName": "Restaurant Alex",
+            # "sellerOperatingLocation": "Selangor",
             "sellerSafeFood": False,
             "sellerVerified": False,
             "sellerHalal" : True
@@ -116,7 +116,7 @@ class PrivateSellerAPITests(TestCase):
         original_sellerName = "Seller A"
         seller = create_seller(
             user=self.user,
-            sellerName=original_sellerName,
+            sellerBusinessName=original_sellerName,
             sellerOperatingLocation = "Selangor",
             sellerSafeFood=True,
             sellerVerified = True,
@@ -124,13 +124,13 @@ class PrivateSellerAPITests(TestCase):
 
         )
 
-        payload = {"sellerName": "Seller B"}
+        payload = {"sellerBusinessName": "Seller B"}
         url = detail_url(seller.id)
         res = self.client.patch(url, payload)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         seller.refresh_from_db()
-        self.assertEqual(seller.sellerName, payload["sellerName"])
+        self.assertEqual(seller.sellerBusinessName, payload["sellerBusinessName"])
         self.assertEqual(seller.sellerOperatingLocation, "Selangor")
         self.assertTrue(seller.sellerSafeFood)
         self.assertTrue(seller.sellerVerified)
@@ -141,8 +141,8 @@ class PrivateSellerAPITests(TestCase):
         """Test full update of seller"""
         seller = create_seller(
             user=self.user,
-            sellerName="sample seller name",
-            sellerOperatingLocation = "Penang",
+            sellerBusinessName="sample seller name",
+            # sellerOperatingLocation = "Penang",
             sellerSafeFood = True,
             sellerVerified = True,
             sellerHalal = True,
@@ -150,8 +150,8 @@ class PrivateSellerAPITests(TestCase):
         )
 
         paylaod = {
-            "sellerName": "new seller name",
-            "sellerOperatingLocation" : "Kedah",
+            "sellerBusinessName": "new seller name",
+            # "sellerOperatingLocation" : "Kedah",
             "sellerSafeFood" : False,
             "sellerVerified" : False,
             "sellerHalal" : False

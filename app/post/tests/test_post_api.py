@@ -24,9 +24,11 @@ def detail_url(post_id):
     """Create and return a post detail URL"""
     return reverse("post:post-detail", args=[post_id])
 
+
 def image_upload_url(post_id):
     """Create and return an image upload URL"""
     return reverse("post:post-upload-image", args=[post_id])
+
 
 def create_post(user, **params):
     """Create and return a sample posts"""
@@ -45,7 +47,7 @@ def create_user(**params):
     return get_user_model().objects.create_user(**params)
 
 
-class PublicPostApiTests(TestCase): 
+class PublicPostApiTests(TestCase):
     """Test unauthenticated API requests."""
 
     def setUp(self):
@@ -62,7 +64,8 @@ class PrivatePostApiTests(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.user = create_user(userEmailAddress="user@example.com", password="test123", userUsername="username03")
+        self.user = create_user(
+            userEmailAddress="user@example.com", password="test123", userUsername="username03")
         self.client.force_authenticate(self.user)
 
     def test_retrieve_posts(self):
@@ -76,13 +79,101 @@ class PrivatePostApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data, serializer.data)
 
+    def test_retrieve_followers_latest_posts(self):
+        """Test retrieving followers latest posts"""
+        new_user = create_user(userEmailAddress="user2@example.com",
+                               password="test123",
+                               userPhoneNumber="0123456843",
+                               userUsername="username1")
+
+        new_user2 = create_user(userEmailAddress="user3@example.com",
+                                password="test123",
+                                userPhoneNumber="0123436843",
+                                userUsername="username3")
+
+        new_user3 = create_user(userEmailAddress="user4@example.com",
+                                password="test123",
+                                userPhoneNumber="0123456813",
+                                userUsername="username4")
+
+        self.user.following.add(new_user, new_user2)
+        post1 = create_post(user=new_user)
+        post2 = create_post(user=new_user2)
+        post3 = create_post(user=new_user2)
+        post4 = create_post(user=new_user3)
+
+        url = reverse("post:post-followers-latest-posts")
+        res = self.client.get(url)
+        # print(res.data)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data), 3)
+
+        self.assertEqual(res.data[0]["postId"], post3.id)
+        self.assertEqual(res.data[1]["postId"], post2.id)
+        self.assertEqual(res.data[2]["postId"], post1.id)
+        self.assertNotIn(post4, res.data)
+
+    def test_like_post(self):
+        """Test if user is able to like a post"""
+        new_user = create_user(userEmailAddress="user2@example.com",
+                               password="test123",
+                               userPhoneNumber="0123456843",
+                               userUsername="username1")
+        post = create_post(user=new_user)
+        url = reverse("post:like-post", kwargs={"post_id": post.id})
+        res = self.client.post(url)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertTrue(self.user in post.postLike.all())
+
+    def test_unlike_post(self):
+        """Test if user is able to unlike a post"""
+        new_user = create_user(userEmailAddress="user2@example.com",
+                               password="test123",
+                               userPhoneNumber="0123456843",
+                               userUsername="username1")
+        post = create_post(user=new_user)
+        post.postLike.add(self.user)
+        url = reverse("post:like-post", kwargs={"post_id": post.id})
+        res = self.client.post(url)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertFalse(self.user in post.postLike.all())
+
+    def test_retrieve_post_likes(self):
+        """Test retrieving a list of user who like a post"""
+        other_user = create_user(
+            userEmailAddress = "user1@example.com",
+            password = "testpass112233",
+            userName = "Test Name",
+            userPhoneNumber = "+60123456543",
+            userUsername = "user1username"
+        )
+
+        other_user1 = create_user(
+            userEmailAddress = "user2@example.com",
+            password = "testpass112233",
+            userName = "Test Name 1",
+            userPhoneNumber = "+60123456634",
+            userUsername = "user2username"
+        )
+
+        post = create_post(user=self.user)
+        post.postLike.add(other_user, other_user1)
+        url = reverse("post:post-likes", kwargs={"post_id": post.id})
+        res = self.client.get(url)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data),2)
+        self.assertEqual(res.data[0]["userUsername"], other_user.userUsername)
+        self.assertEqual(res.data[1]["userUsername"], other_user1.userUsername)
+
     def test_post_list_limited_to_user(self):
         """Test list of posts is limited to authenticated user."""
         other_user = create_user(
             userEmailAddress="other@example.com",
             password="password123",
             userPhoneNumber="+60123456789",
-            userUsername = "otherusername"
+            userUsername="otherusername"
         )
         create_post(user=other_user)
         create_post(user=self.user)
@@ -175,7 +266,7 @@ class PrivatePostApiTests(TestCase):
         new_user = create_user(userEmailAddress="user2@example.com",
                                password="test123",
                                userPhoneNumber="0123456843",
-                               userUsername = "username1")
+                               userUsername="username1")
         post = create_post(user=self.user)
 
         payload = {"user": new_user.id}
@@ -200,7 +291,7 @@ class PrivatePostApiTests(TestCase):
         new_user = create_user(userEmailAddress="user2@example.com",
                                password="test123",
                                userPhoneNumber="0123456843",
-                               userUsername = "username1")
+                               userUsername="username1")
         post = create_post(user=new_user)
         url = detail_url(post.id)
         res = self.client.delete(url)
@@ -216,8 +307,8 @@ class ImageUploadTests(TestCase):
         self.client = APIClient()
         self.user = get_user_model().objects.create_user(
             userEmailAddress="user@example.com",
-            password = "password123",
-            userUsername = "example username"
+            password="password123",
+            userUsername="example username"
         )
         self.client.force_authenticate(self.user)
         self.post = create_post(user=self.user)
@@ -225,12 +316,11 @@ class ImageUploadTests(TestCase):
     def tearDown(self):
         self.post.postPhotoUrl.delete()
 
-
     def test_upload_image(self):
         """Test uploading an image to a post"""
         url = image_upload_url(self.post.id)
         with tempfile.NamedTemporaryFile(suffix=".jpg") as image_file:
-            img = Image.new("RGB", (10,10))
+            img = Image.new("RGB", (10, 10))
             img.save(image_file, format="JPEG")
             image_file.seek(0)
             payload = {"postPhotoUrl": image_file}
