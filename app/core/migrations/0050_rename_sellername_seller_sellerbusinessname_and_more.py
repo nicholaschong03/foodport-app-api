@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='seller',
             name='dishId',
-            field=models.IntegerField(blank=True, default=0, null=True),
+            field=models.JSONField(blank=True, null=True, default=list),
         ),
         migrations.AddField(
             model_name='seller',
@@ -30,7 +30,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='seller',
             name='sellerOwnerId',
-            field=models.IntegerField(blank=True, default=0, null=True),
+            field=models.IntegerField(blank=True, null=True),
         ),
         migrations.AddField(
             model_name='user',

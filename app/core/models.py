@@ -161,9 +161,9 @@ class Seller(models.Model):
     sellerVerified = models.BooleanField(default=False)
     sellerSafeFood = models.BooleanField(default=False)
     sellerHalal = models.BooleanField(default=False)
-    sellerOwnerId = models.IntegerField(null=True, blank=True, default=0)
+    sellerOwnerId = models.IntegerField(null=True, blank=True)
     sellerInfoContributor = models.JSONField(null=True, blank=True)
-    dishId = models.IntegerField(null=True, blank=True, default=0)
+    dishId = models.JSONField(blank=True, null=True, default=list)
 
     def __str__(self):
         return self.sellerBusinessName
