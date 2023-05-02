@@ -9,7 +9,7 @@ from rest_framework.routers import DefaultRouter
 from seller import views
 
 router = DefaultRouter()
-router.register("my-sellers", views.SellerViewset, basename="my-sellers")
+router.register("sellers/user", views.SellerViewset, basename="my-sellers")
 
 app_name = "seller"
 
