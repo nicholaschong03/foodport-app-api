@@ -12,11 +12,12 @@ from django.contrib.auth import get_user_model
 from core.models import Seller
 from seller.serializers import SellerSerializer, SellerDetailSerializer
 
-MY_SELLERS_URL = reverse("seller:seller-list")
+MY_SELLERS_URL = reverse("seller:my-sellers-list")
+SELLER_LIST_URL = reverse("seller:seller_list")
 
 def detail_url(seller_id):
     """Create and return a seller detail URL"""
-    return reverse("seller:seller-detail", args=[seller_id])
+    return reverse("seller:my-sellers-detail", args=[seller_id])
 
 def create_user(**params):
     """Create and return user"""
@@ -202,6 +203,20 @@ class PrivateSellerAPITests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
         self.assertTrue(Seller.objects.filter(id=seller.id).exists())
+
+
+    def test_user_list_search(self):
+        """Test searching for a seller"""
+        new_user = create_user(userEmailAddress="user2@example.com",
+                               password="test123",
+                               userPhoneNumber="0123456843",
+                               userUsername = "username1")
+        seller = create_seller(user=new_user)
+        res = self.client.get(SELLER_LIST_URL, {"search": "sample name"})
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data["results"]),1)
+        self.assertEqual(res.data["results"][0]["sellerBusinessName"], seller.sellerBusinessName)
+
 
 
 

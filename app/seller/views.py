@@ -1,7 +1,11 @@
-from rest_framework import viewsets, status, permissions, authentication
+from rest_framework import viewsets, status, permissions, authentication, generics
 from rest_framework.response import Response
 from core.models import Seller
 from seller.serializers import SellerSerializer, SellerDetailSerializer
+from django.utils import timezone
+from rest_framework import filters
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.pagination import PageNumberPagination
 
 class SellerViewset(viewsets.ModelViewSet):
     """View for manage seller APIs"""
@@ -23,7 +27,30 @@ class SellerViewset(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         user = self.request.user
-        serializer.save(user=user)
+        ip_address = self.request.META.get("REMOTE_ADDR")
+
+        seller_info_contributor = {
+            str(user.id): {
+                "datetime": timezone.now().isoformat(),
+                "IP_address": ip_address,
+            }
+        }
+        serializer.save(user=user, sellerInfoContributor=seller_info_contributor)
+
+
+class CustomSellerPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = "page_size"
+    max_page_size = 100
+
+class SellerListView(generics.ListAPIView):
+    queryset = Seller.objects.all().order_by("sellerBusinessName")
+    serializer_class = SellerSerializer
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    search_fields = ["sellerBusinessName"]
+    pagination_class = CustomSellerPagination
 
 
 

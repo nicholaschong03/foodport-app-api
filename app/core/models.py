@@ -185,5 +185,5 @@ class Dish(models.Model):
         null=True
     )
     sellerId = models.IntegerField(null=True, blank=True)
-    postId = models.IntegerField(null=True, blank=True)
+    postId = models.JSONField(null=True, blank=True, default=list)
     dishInfoContributor = models.JSONField(default=dict, blank=True)

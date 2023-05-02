@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='dish',
             name='postId',
-            field=models.IntegerField(blank=True, null=True),
+            field=models.JSONField(blank=True, null=True, default=list),
         ),
         migrations.AddField(
             model_name='dish',

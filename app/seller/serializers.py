@@ -5,6 +5,7 @@ from core.models import Seller
 class SellerSerializer(serializers.ModelSerializer):
     """Serializer for seller"""
     sellerId = serializers.ReadOnlyField(source="id")
+    sellerInfoContributor = serializers.SerializerMethodField()
     class Meta:
         model = Seller
         fields = [
@@ -18,6 +19,9 @@ class SellerSerializer(serializers.ModelSerializer):
                   "sellerInfoContributor",
                   "dishId",
                   "sellerOwnerId",]
+
+    def get_sellerInfoContributor(self,obj):
+        return obj.sellerInfoContributor
 
 
 class SellerDetailSerializer(SellerSerializer):
