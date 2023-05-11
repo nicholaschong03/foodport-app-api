@@ -1,7 +1,10 @@
-from rest_framework import viewsets, status, permissions, authentication
+from rest_framework import viewsets, status, permissions, authentication, generics, filters
 from rest_framework.response import Response
 from core.models import Dish
 from dish.serializers import DishSerializer, DishDetailSerializer
+
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.pagination import PageNumberPagination
 
 class DishViewset(viewsets.ModelViewSet):
     """Views for manage dish APIs"""
@@ -25,6 +28,19 @@ class DishViewset(viewsets.ModelViewSet):
         """create dishs """
         user = self.request.user
         serializer.save(user=user)
+
+class CustomDishPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = "page_size"
+    max_page_size = 100
+
+class DishListView(generics.ListAPIView):
+    serializer_class = DishSerializer
+    queryset = Dish.objects.all().order_by("dishName")
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ["sellerId"]
+    search_fields = ["dishName"]
+    pagination_class = CustomDishPagination
 
 
 

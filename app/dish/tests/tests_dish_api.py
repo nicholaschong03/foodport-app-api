@@ -12,7 +12,8 @@ from django.contrib.auth import get_user_model
 from core.models import Dish
 from dish.serializers import DishSerializer, DishDetailSerializer
 
-MY_DISHES_URL = reverse("dish:dish-list")
+MY_DISHES_URL = reverse("dish:my-dishes-list")
+DISHES_LIST_URL = reverse("dish:dish_list")
 
 def detail_url(dish_id):
     """Create and return a dish detail URL"""
@@ -201,6 +202,18 @@ class PrivateDishAPITests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
         self.assertTrue(Dish.objects.filter(id=dish.id).exists())
+
+    def test_user_list_search(self):
+        """Test searching for a dish"""
+        new_user = create_user(userEmailAddress="user2@example.com",
+                                password="test123",
+                                userPhoneNumber="0123456843",
+                                userUsername = "username1")
+        dish = create_dish(user=new_user)
+        res = self.client.get(DISHES_LIST_URL, {"search": "Tom Yam"})
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data["results"]),1)
+        self.assertEqual(res.data["results"][0]["dishName"], dish.dishName)
 
 
 
