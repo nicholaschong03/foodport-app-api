@@ -2,6 +2,7 @@ from rest_framework import viewsets, status, permissions, authentication, generi
 from rest_framework.response import Response
 from core.models import Dish
 from dish.serializers import DishSerializer, DishDetailSerializer
+from django.http import Http404
 
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
@@ -35,12 +36,34 @@ class CustomDishPagination(PageNumberPagination):
     max_page_size = 100
 
 class DishListView(generics.ListAPIView):
+    """Return a list of dish filtered by dishName and seach query"""
+    permissions_classes = [permissions.IsAuthenticated]
+    authentication_classes = [authentication.TokenAuthentication]
     serializer_class = DishSerializer
+
     queryset = Dish.objects.all().order_by("dishName")
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ["sellerId"]
     search_fields = ["dishName"]
     pagination_class = CustomDishPagination
+
+class RetrieveDishView(generics.RetrieveAPIView):
+    """Retrieve a dish"""
+    serializer_class = DishSerializer
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        """Retrieve and return a dish"""
+        try:
+            dish = Dish.objects.get(id=self.kwargs["id"])
+        except Dish.DoesNotExist:
+            raise Http404("Dish not found")
+        return dish
+
+
+
+
 
 
 

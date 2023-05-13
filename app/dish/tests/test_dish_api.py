@@ -16,8 +16,12 @@ MY_DISHES_URL = reverse("dish:my-dishes-list")
 DISHES_LIST_URL = reverse("dish:dish_list")
 
 def detail_url(dish_id):
-    """Create and return a dish detail URL"""
+    """Create and return a users' own dish detail URL"""
     return reverse("dish:dish-detail", args=[dish_id])
+
+def specific_dish_url(dish_id):
+    """Create and return a specific dish URL"""
+    return reverse("dish:retrieve_dish", args=[dish_id])
 
 def create_user(**params):
     """Create and return user"""
@@ -214,6 +218,23 @@ class PrivateDishAPITests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data["results"]),1)
         self.assertEqual(res.data["results"][0]["dishName"], dish.dishName)
+
+    def test_retrieve_a_specific_dish(self):
+        """Test get dish detail"""
+        other_user = create_user(
+        userEmailAddress="other@example.com",
+        password="password123",
+        userPhoneNumber="+60123456789",
+        userUsername = "otherusername"
+        )
+        dish = create_dish(user=other_user)
+
+        url = specific_dish_url(dish.id)
+        res = self.client.get(url)
+
+        serializer = DishDetailSerializer(dish)
+        self.assertEqual(res.data, serializer.data)
+
 
 
 

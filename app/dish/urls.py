@@ -15,5 +15,7 @@ app_name = "dish"
 
 urlpatterns = [
     path("", include(router.urls)),
-    path("dishes/", views.DishListView.as_view(), name = 'dish_list')
+    path("dishes/", views.DishListView.as_view(), name = 'dish_list'),
+    path('dishes/<int:id>/', views.RetrieveDishView.as_view(), name='retrieve_dish'),
+
 ]
