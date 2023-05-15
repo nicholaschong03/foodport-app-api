@@ -102,8 +102,14 @@ class User(AbstractBaseUser, PermissionsMixin):
     userFollowing = models.IntegerField(blank=True, null=True)
     userFriends = models.IntegerField(blank=True, null=True)
     userAge = models.IntegerField(blank=True, null=True)
-    userLocation = models.CharField(max_length=255, blank=True)
     following = models.ManyToManyField("self", symmetrical=False, related_name="followers", blank=True)
+    userGender = models.CharField(max_length=255, blank=True)
+    userLocation = models.JSONField(default=dict, blank=True)
+
+    def get_friends(self):
+        """Return a QuerySet of friends of the user"""
+        return self.following.filter(following__in=[self])
+
 
 
 
@@ -118,6 +124,7 @@ class Post(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
+        related_name="posts",
     )
     postReview = models.TextField()
     postPublishDateTime = models.DateTimeField(auto_now_add=True)
@@ -145,6 +152,7 @@ class Post(models.Model):
     postDishSellerVisit = models.JSONField(default=dict, blank=True)
     postDishVisit = models.JSONField(default=dict, blank=True)
     postLike = models.ManyToManyField(User, related_name="liked_post", blank=True)
+
 
     def __str__(self):
         return self.postReview

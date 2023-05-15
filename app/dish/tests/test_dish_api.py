@@ -170,7 +170,7 @@ class PrivateDishAPITests(TestCase):
         self.assertEqual(dish.user, self.user)
 
     def test_update_user_returns_error(self):
-        """Test changing the dish user results in an error"""
+        """Test changing the seller user results in an error"""
         new_user = create_user(userEmailAddress="user2@example.com",
                                password="test123",
                                userPhoneNumber="0123456843",
@@ -179,7 +179,9 @@ class PrivateDishAPITests(TestCase):
 
         payload = {"user": new_user.id}
         url = detail_url(dish.id)
-        self.client.patch(url, payload)
+        res = self.client.patch(url, payload)
+
+        self.assertNotEqual(res.status_code, status.HTTP_200_OK)
 
         dish.refresh_from_db()
         self.assertEqual(dish.user, self.user)

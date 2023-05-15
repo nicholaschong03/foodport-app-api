@@ -365,13 +365,33 @@ class PrivateUserApiTest(TestCase):
         url = detail_url(other_user.id)
         res = self.client.get(url)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(res.data["followers_count"], 1)
-        self.assertEqual(res.data["following_count"],0)
+        self.assertEqual(res.data["userFollowerCount"], 1)
+        self.assertEqual(res.data["userFollowingCount"],0)
 
         res = self.client.get(ME_URL)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(res.data["followers_count"], 0)
-        self.assertEqual(res.data["following_count"],1)
+        self.assertEqual(res.data["userFollowerCount"], 0)
+        self.assertEqual(res.data["userFollowingCount"],1)
+
+    def test_retrieving_user_friends(self):
+        """Test retrieving a user friends list"""
+        other_user = create_user(
+            userEmailAddress = "user1@example.com",
+            password = "testpass112233",
+            userName = "Test Name",
+            userPhoneNumber = "+60123456543",
+            userUsername = "user1username"
+        )
+        self.user.following.add(other_user)
+        other_user.following.add(self.user)
+
+        url = reverse("user:friends_list", kwargs={"user_id": self.user.id})
+        res = self.client.get(url)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data),1)
+        self.assertEqual(res.data[0]["userUsername"], other_user.userUsername)
+
 
 
 

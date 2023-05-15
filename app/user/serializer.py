@@ -22,8 +22,12 @@ class UserSerializer(serializers.ModelSerializer):
     userIPAddress = serializers.SerializerMethodField()
     userPostId = serializers.SerializerMethodField()
     userId = serializers.ReadOnlyField(source="id")
-    followers_count = serializers.SerializerMethodField()
-    following_count = serializers.SerializerMethodField()
+    userFollowerCount = serializers.SerializerMethodField()
+    userFollowingCount = serializers.SerializerMethodField()
+    userFriendsCount = serializers.SerializerMethodField()
+    userFollowerId = serializers.SerializerMethodField()
+    userFollowingId = serializers.SerializerMethodField()
+    userLikeCount = serializers.SerializerMethodField()
 
 
     class Meta:
@@ -36,9 +40,14 @@ class UserSerializer(serializers.ModelSerializer):
                   "userId",
                   "userBio",
                   "userProfilePictureUrl",
-                  "followers_count",
-                  "following_count",
+                  "userFollowerCount",
+                  "userFollowingCount",
+                  "userFollowerId",
+                  "userFollowingId",
+                  "userFriendsCount",
+                  "userLikeCount",
                   "userBirthDate",
+                  "userLocation",
                   "userAccountRegisterDate",
                   "userIPAddress",
                   "userPostId",
@@ -89,11 +98,27 @@ class UserSerializer(serializers.ModelSerializer):
         posts = Post.objects.filter(user=obj)
         return [post.id for post in posts]
 
-    def get_followers_count(self, obj):
+    def get_userFollowerCount(self, obj):
         return obj.followers.count()
 
-    def get_following_count(self, obj):
+    def get_userFollowingCount(self, obj):
         return obj.following.count()
+
+    def get_userFriendsCount(self, obj):
+        return obj.get_friends().count()
+
+    def get_userFollowerId(self,obj):
+        """Method to get the list of follower's ids related to the user"""
+        return [follower.id for follower in obj.followers.all()]
+
+    def get_userFollowingId(self,obj):
+        """Method to get the list of follower's ids related to the user"""
+        return [following.id for following in obj.following.all()]
+
+    def get_userLikeCount(self,obj):
+        """Method to get the total number of likes related tot he user's posts"""
+        return sum(post.postLike.count() for post in obj.posts.all())
+
 
 class AuthTokenSerializer(serializers.Serializer):
     """Serializer for the user auth token."""

@@ -165,5 +165,18 @@ class FollowingListView(generics.ListAPIView):
             raise Http404("User not found")
         return user.following.all()
 
+class FriendsListView(generics.ListAPIView):
+    serializer_class = UsersListSerializer
+    authentication_classes = [authentication.TokenAuthentication]
+    permissions_calsses = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user_id = self.kwargs["user_id"]
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            raise Http404("User not found")
+        return user.get_friends()
+
 
 
