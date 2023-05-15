@@ -18,6 +18,6 @@ urlpatterns = [
     path("users/follow/<int:user_id>/", views.FollowUserView.as_view(), name="follow_user"),
     path("user/<int:user_id>/followers", views.FollowersListView.as_view(), name = "followers_list"),
     path("user/<int:user_id>/following", views.FollowingListView.as_view(), name = "following_list"),
-    path("user/<int:user_id>/following", views.FriendsListView.as_view(), name = "friends_list"),
-    
+    path("user/<int:user_id>/friends", views.FriendsListView.as_view(), name = "friends_list"),
+
     ]
