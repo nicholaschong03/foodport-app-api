@@ -40,6 +40,7 @@ class UserSerializer(serializers.ModelSerializer):
                   "userId",
                   "userBio",
                   "userGender",
+                  "userShowBirthDate",
                   "userProfilePictureUrl",
                   "userCoverPictureUrl",
                   "userFollowerCount",
