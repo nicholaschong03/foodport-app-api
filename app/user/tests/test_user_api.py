@@ -15,6 +15,7 @@ TOKEN_URL = reverse("user:token")
 ME_URL = reverse("user:me")
 LOGOUT_URL = reverse("user:logout")
 IMAGE_URL = reverse("user:upload_profile_image")
+COVER_PICTURE_URL = reverse("user:upload_cover_picture")
 USER_LIST_URL = reverse("user:user_list")
 
 
@@ -417,7 +418,7 @@ class ImageUploadTests(TestCase):
         self.user.userProfilePictureUrl.delete()
 
     def test_upload_image(self):
-        """Test uploading an image to a post"""
+        """Test uploading an image to a user profile"""
         with tempfile.NamedTemporaryFile(suffix=".jpg") as image_file:
             img = Image.new("RGB", (10,10))
             img.save(image_file, format="JPEG")
@@ -429,6 +430,89 @@ class ImageUploadTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertIn("userProfilePictureUrl", res.data)
         self.assertTrue(os.path.exists(self.user.userProfilePictureUrl.path))
+
+    def test_replace_image(self):
+        """Test replacing an image on a user profile deletes the old one """
+        # upload the first image
+        with tempfile.NamedTemporaryFile(suffix=".jpg") as image_file:
+            img = Image.new("RGB", (10,10))
+            img.save(image_file, format="JPEG")
+            image_file.seek(0)
+            payload = {"userProfilePictureUrl": image_file}
+            res = self.client.post(IMAGE_URL, payload, format="multipart")
+
+        self.user.refresh_from_db()
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn("userProfilePictureUrl", res.data)
+        self.assertTrue(os.path.exists(self.user.userProfilePictureUrl.path))
+
+        # save the path of the first uplaoded image
+        old_image_path = self.user.userProfilePictureUrl.path
+
+        #upload the second image
+        with tempfile.NamedTemporaryFile(suffix=".jpg") as image_file:
+            img = Image.new("RGB", (10,10))
+            img.save(image_file, format="JPEG")
+            image_file.seek(0)
+            payload = {"userProfilePictureUrl": image_file}
+            res = self.client.post(IMAGE_URL, payload, format="multipart")
+
+        self.user.refresh_from_db()
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn("userProfilePictureUrl", res.data)
+        self.assertTrue(os.path.exists(self.user.userProfilePictureUrl.path))
+
+        #Check the first image has been deleted
+        self.assertFalse(os.path.exists(old_image_path))
+
+
+    def test_upload_cover_picture(self):
+        """Test uploading a cover picture to a user profile"""
+        with tempfile.NamedTemporaryFile(suffix=".jpg") as image_file:
+            img = Image.new("RGB", (10,10))
+            img.save(image_file, format="JPEG")
+            image_file.seek(0)
+            payload = {"userCoverPictureUrl": image_file}
+            res = self.client.post(COVER_PICTURE_URL, payload, format="multipart")
+
+        self.user.refresh_from_db()
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn("userCoverPictureUrl", res.data)
+        self.assertTrue(os.path.exists(self.user.userCoverPictureUrl.path))
+
+    def test_replace_cover_picture(self):
+        """Test replacing a cover picture on a user profile deletes the old one """
+        # upload the first image
+        with tempfile.NamedTemporaryFile(suffix=".jpg") as image_file:
+            img = Image.new("RGB", (10,10))
+            img.save(image_file, format="JPEG")
+            image_file.seek(0)
+            payload = {"userCoverPictureUrl": image_file}
+            res = self.client.post(COVER_PICTURE_URL, payload, format="multipart")
+
+        self.user.refresh_from_db()
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn("userCoverPictureUrl", res.data)
+        self.assertTrue(os.path.exists(self.user.userCoverPictureUrl.path))
+
+        # save the path of the first uplaoded image
+        old_image_path = self.user.userCoverPictureUrl.path
+
+        #upload the second image
+        with tempfile.NamedTemporaryFile(suffix=".jpg") as image_file:
+            img = Image.new("RGB", (10,10))
+            img.save(image_file, format="JPEG")
+            image_file.seek(0)
+            payload = {"userCoverPictureUrl": image_file}
+            res = self.client.post(COVER_PICTURE_URL, payload, format="multipart")
+
+        self.user.refresh_from_db()
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn("userCoverPictureUrl", res.data)
+        self.assertTrue(os.path.exists(self.user.userCoverPictureUrl.path))
+
+        self.assertFalse(os.path.exists(old_image_path))
+
 
 
 

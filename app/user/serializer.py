@@ -41,6 +41,7 @@ class UserSerializer(serializers.ModelSerializer):
                   "userBio",
                   "userGender",
                   "userProfilePictureUrl",
+                  "userCoverPictureUrl",
                   "userFollowerCount",
                   "userFollowingCount",
                   "userFollowerId",
@@ -152,6 +153,14 @@ class UserProfileImageSerializer(serializers.ModelSerializer):
         fields = ["id", "userProfilePictureUrl"]
         read_only_fields = ["id"]
         extra_kwargs = {"userProfilePictureUrl": {"required":"True"}}
+
+class UserProfileCoverSerializer(serializers.ModelSerializer):
+    """Serializer for uploading cover picture to user profile"""
+    class Meta:
+        model = User
+        fields = ["id", "userCoverPictureUrl"]
+        read_only_fields = ["id"]
+        extra_kwargs = {"userCoverPictureUrl": {"required":"True"}}
 
 class UsersListSerializer(serializers.ModelSerializer):
     """Serializer for retrieving a list of users"""

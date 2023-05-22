@@ -12,11 +12,12 @@ from rest_framework import filters
 from django.http import Http404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
-from user.serializer import UserSerializer, AuthTokenSerializer, UserProfileImageSerializer, UsersListSerializer
+from user.serializer import UserSerializer, AuthTokenSerializer, UserProfileImageSerializer, UsersListSerializer, UserProfileCoverSerializer
 from core.models import User
 from rest_framework import status
 from django.conf import settings
 
+import os
 
 
 class CreateUserView(generics.CreateAPIView):
@@ -65,6 +66,7 @@ class ManagerUserView(generics.RetrieveUpdateAPIView):
         serializer = self.serializer_class(user, context=serializer_context)
         return serializer.instance
 
+
 class UploadProfileImageView(ManagerUserView):
     """Upload a profile image for the authenticated user"""
     serializer_class = UserProfileImageSerializer
@@ -74,10 +76,36 @@ class UploadProfileImageView(ManagerUserView):
         serializer = self.get_serializer(user, data=request.data)
 
         if serializer.is_valid():
+            if user.userProfilePictureUrl:
+                old_profile_picture_path = os.path.join(
+                    settings.MEDIA_ROOT, str(user.userProfilePictureUrl))
+                if os.path.isfile(old_profile_picture_path):
+                    os.remove(old_profile_picture_path)
+
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UploadCoverPictureView(ManagerUserView):
+    """Upload a cover image for the authenticated user"""
+    serializer_class = UserProfileCoverSerializer
+
+    def post(self, request, *args, **kwargs):
+        user = self.get_object()
+        serializer = self.get_serializer(user, data=request.data)
+
+        if serializer.is_valid():
+            if user.userCoverPictureUrl:
+                old_cover_picture_path = os.path.join(
+                    settings.MEDIA_ROOT, str(user.userCoverPictureUrl)
+                )
+                if os.path.isfile(old_cover_picture_path):
+                    os.remove(old_cover_picture_path)
+
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class RetrieveUserView(generics.RetrieveAPIView):
     """Retrieve a user's profile"""
@@ -95,10 +123,12 @@ class RetrieveUserView(generics.RetrieveAPIView):
         # return serializer.data
         return user
 
+
 class CustomUserPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = "page_size"
     max_page_size = 100
+
 
 class UserListView(generics.ListAPIView):
     queryset = User.objects.all().order_by("userName")
@@ -118,6 +148,7 @@ class LogoutView(generics.GenericAPIView):
         """Remove the authentication token associated with the current user"""
         request.user.auth_token.delete()
         return Response({"message": "Successfully logged out"})
+
 
 class FollowUserView(views.APIView):
     authentication_classes = [authentication.TokenAuthentication]
@@ -139,6 +170,7 @@ class FollowUserView(views.APIView):
             request.user.following.add(user_to_follow)
             return Response({"status": "followed"}, status=status.HTTP_200_OK)
 
+
 class FollowersListView(generics.ListAPIView):
     serializer_class = UsersListSerializer
     authentication_classes = [authentication.TokenAuthentication]
@@ -151,6 +183,7 @@ class FollowersListView(generics.ListAPIView):
         except User.DoesNotExist:
             raise Http404("User not found")
         return user.followers.all()
+
 
 class FollowingListView(generics.ListAPIView):
     serializer_class = UsersListSerializer
@@ -165,6 +198,7 @@ class FollowingListView(generics.ListAPIView):
             raise Http404("User not found")
         return user.following.all()
 
+
 class FriendsListView(generics.ListAPIView):
     serializer_class = UsersListSerializer
     authentication_classes = [authentication.TokenAuthentication]
@@ -177,6 +211,3 @@ class FriendsListView(generics.ListAPIView):
         except User.DoesNotExist:
             raise Http404("User not found")
         return user.get_friends()
-
-
-

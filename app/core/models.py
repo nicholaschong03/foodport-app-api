@@ -34,6 +34,13 @@ def user_image_file_path(instance, filename):
     filename = f"{uuid.uuid4()}{ext}"
     return os.path.join(directory_path, filename)
 
+def user_cover_picture_file_path(instance, filename):
+    """Generate file path for profile"""
+    ext = os.path.splitext(filename)[1]
+    directory_path = f"uploads/profiles/user{instance.id}/cover-picture"
+    filename = f"{uuid.uuid4()}{ext}"
+    return os.path.join(directory_path, filename)
+
 
 
 class UserManager(BaseUserManager):
@@ -105,6 +112,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     following = models.ManyToManyField("self", symmetrical=False, related_name="followers", blank=True)
     userGender = models.CharField(max_length=255, blank=True)
     userLocation = models.JSONField(default=dict, blank=True)
+    userShowBirthDate = models.BooleanField(default=True)
+    userCoverPictureUrl = models.ImageField(null=True, upload_to=user_cover_picture_file_path)
 
     def get_friends(self):
         """Return a QuerySet of friends of the user"""
