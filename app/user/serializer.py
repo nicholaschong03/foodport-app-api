@@ -15,11 +15,13 @@ from django.utils.translation import gettext as _
 
 from core.models import Post, User
 
+from ip2geotools.databases.noncommercial import DbIpCity
+
 
 
 class UserSerializer(serializers.ModelSerializer):
     """Serializer for the user object"""
-    userIPAddress = serializers.SerializerMethodField()
+    IPv4 = serializers.SerializerMethodField()
     userPostId = serializers.SerializerMethodField()
     userId = serializers.ReadOnlyField(source="id")
     userFollowerCount = serializers.SerializerMethodField()
@@ -52,7 +54,7 @@ class UserSerializer(serializers.ModelSerializer):
                   "userBirthDate",
                   "userLocation",
                   "userAccountRegisterDate",
-                  "userIPAddress",
+                  "IPv4",
                   "userPostId",
                   "userPostLike",
                   "userPostComment",
@@ -81,20 +83,72 @@ class UserSerializer(serializers.ModelSerializer):
 
         return user
 
-    def get_userIPAddress(self, obj):
-        """Return the user's IP address"""
+    # def get_userIPAddress(self, obj):
+    #     """Return the user's IP address"""
+    #     request = self.context.get("request")
+    #     ip_address = self.context.get("ip_address")
+    #     if ip_address:
+    #         return ip_address
+    #     elif request:
+    #         x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
+    #         if x_forwarded_for:
+    #             ip = x_forwarded_for.split(',')[0]
+    #         else:
+    #             ip = request.META.get("REMOTE_ADDR")
+    #         return ip
+    #     return None
+    def get_IPv4(self, obj):
+        """Return the user's IP address and location"""
         request = self.context.get("request")
         ip_address = self.context.get("ip_address")
-        if ip_address:
-            return ip_address
-        elif request:
+        if not ip_address and request:
             x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
             if x_forwarded_for:
-                ip = x_forwarded_for.split(',')[0]
+                ip_address = x_forwarded_for.split(',')[0]
             else:
-                ip = request.META.get("REMOTE_ADDR")
-            return ip
+                ip_address = request.META.get("REMOTE_ADDR")
+
+        if ip_address:
+            try:
+                response = DbIpCity.get(ip_address, api_key='free')
+                return {
+                    "ipAddress": ip_address,
+                    "location": {
+                        "city": response.city,
+                        "region": response.region,
+                        "country": response.country,
+                    }
+                }
+            except Exception as e:
+                # Handle any exceptions that arise from the IP lookup
+                return {
+                    "ipAddress": ip_address,
+                    "location": str(e)
+                }
+
         return None
+
+    # def get_IPv4(self, obj):
+    #     """Return the user's IP address"""
+    #     #request = self.context.get("request")
+    #     ip_address = self.context.get("ip_address")
+    #     location = self.context.get("location")
+
+    #     if ip_address and location:
+    #         return {
+    #             "ipAddress": ip_address,
+    #             "location": location,
+    #         }
+    #     elif ip_address:
+    #         return {
+    #             "ipAddress": ip_address,
+    #             "location": "N/A"
+    #         }
+    #     else:
+    #         return{
+    #             "ipAddress": "N/A",
+    #             "location": "N/A"
+    #         }
 
     def get_userPostId(self,obj):
         """Method to get the list of postId related to the user"""
