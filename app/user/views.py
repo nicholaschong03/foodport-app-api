@@ -49,6 +49,8 @@ class CreateTokenView(ObtainAuthToken):
         return Response(response_data, status=status.HTTP_200_OK)
 
 
+
+
 class ManagerUserView(generics.RetrieveUpdateAPIView):
     """Manage the authenticated user."""
     serializer_class = UserSerializer
@@ -67,7 +69,7 @@ class ManagerUserView(generics.RetrieveUpdateAPIView):
 
         try:
             response = DbIpCity.get(ip, api_key="free")
-            locatin = {
+            location = {
                 "state": response.region,
                 "country": response.country
             }
