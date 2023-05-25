@@ -17,6 +17,8 @@ from core.models import User
 from rest_framework import status
 from django.conf import settings
 
+from ip2geotools.databases.noncommercial import DbIpCity
+
 import os
 
 
@@ -62,6 +64,22 @@ class ManagerUserView(generics.RetrieveUpdateAPIView):
             ip = x_forwarded_for.split(',')[0]
         else:
             ip = request.META.get("REMOTE_ADDR")
+
+        try:
+            response = DbIpCity.get(ip, api_key="free")
+            locatin = {
+                "state": response.region,
+                "country": response.country
+            }
+        except Exception as e:
+            location = "Location unavailable"
+
+        user.IPv4 = {
+            "ipAddress": ip,
+            "location": location
+        }
+        user.save()
+
         serializer_context = {"request": request, "ip_address": ip}
         serializer = self.serializer_class(user, context=serializer_context)
         return serializer.instance

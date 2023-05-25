@@ -51,8 +51,21 @@ class PostViewset(viewsets.ModelViewSet):
     @action(detail=False, methods = ["GET"], url_path="followers-latest-posts")
     def followers_latest_posts(self, request):
         user = self.request.user
-        followers = user.followers.all()
         queryset = Post.objects.filter(user__in = user.following.all()).order_by('-postPublishDateTime')
+        page = self.paginate_queryset(queryset)
+
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods = ["GET"], url_path="for-you")
+    def all_posts(self, request):
+        """Retrieve all posts"""
+        user = self.request.user
+        queryset = Post.objects.exclude(user=user).order_by("-postPublishDateTime")
         page = self.paginate_queryset(queryset)
 
         if page is not None:
