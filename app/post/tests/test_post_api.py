@@ -102,7 +102,7 @@ class PrivatePostApiTests(TestCase):
         post3 = create_post(user=new_user2)
         post4 = create_post(user=new_user3)
 
-        url = reverse("post:post-following")
+        url = reverse("post:post-followers-latest-posts")
         res = self.client.get(url)
         # print(res.data)
 

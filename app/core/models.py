@@ -114,7 +114,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     userLocation = models.JSONField(default=dict, blank=True)
     userShowBirthDate = models.BooleanField(default=True)
     userCoverPictureUrl = models.ImageField(null=True, upload_to=user_cover_picture_file_path)
-    IPv4 = models.JSONField(null=True, blank=True)
+    IPv4 = models.JSONField(default=dict, null=True, blank=True)
 
     def get_friends(self):
         """Return a QuerySet of friends of the user"""
