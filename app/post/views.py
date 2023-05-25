@@ -49,7 +49,7 @@ class PostViewset(viewsets.ModelViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods = ["GET"], url_path="following")
-    def followers_latest_posts(self, request):
+    def following(self, request):
         user = self.request.user
         queryset = Post.objects.filter(user__in = user.following.all()).order_by('-postPublishDateTime')
         page = self.paginate_queryset(queryset)

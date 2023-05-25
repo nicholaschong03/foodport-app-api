@@ -24,7 +24,7 @@ class UserSerializer(serializers.ModelSerializer):
     userId = serializers.ReadOnlyField(source="id")
     userFollowerCount = serializers.SerializerMethodField()
     userFollowingCount = serializers.SerializerMethodField()
-    userFriendsCount = serializers.SerializerMethodField()
+    userFriendCount = serializers.SerializerMethodField()
     userFollowerId = serializers.SerializerMethodField()
     userFollowingId = serializers.SerializerMethodField()
     userLikeCount = serializers.SerializerMethodField()
@@ -47,7 +47,7 @@ class UserSerializer(serializers.ModelSerializer):
                   "userFollowingCount",
                   "userFollowerId",
                   "userFollowingId",
-                  "userFriendsCount",
+                  "userFriendCount",
                   "userLikeCount",
                   "userBirthDate",
                   "userLocation",
@@ -92,7 +92,7 @@ class UserSerializer(serializers.ModelSerializer):
     def get_userFollowingCount(self, obj):
         return obj.following.count()
 
-    def get_userFriendsCount(self, obj):
+    def get_userFriendCount(self, obj):
         return obj.get_friends().count()
 
     def get_userFollowerId(self,obj):

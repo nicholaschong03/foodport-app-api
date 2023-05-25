@@ -107,7 +107,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     userLikes = models.IntegerField(blank=True, null=True)
     userFollowers = models.IntegerField(blank=True, null=True)
     userFollowing = models.IntegerField(blank=True, null=True)
-    userFriends = models.IntegerField(default=0)
+    userFriend = models.IntegerField(default=0)
     userAge = models.IntegerField(blank=True, null=True)
     following = models.ManyToManyField("self", symmetrical=False, related_name="followers", blank=True)
     userGender = models.CharField(max_length=255, blank=True)

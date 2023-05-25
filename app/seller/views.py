@@ -7,6 +7,11 @@ from rest_framework import filters
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
 
+from django.http import Http404
+
+
+
+
 class SellerViewset(viewsets.ModelViewSet):
     """View for manage seller APIs"""
     serializer_class = SellerDetailSerializer
@@ -51,6 +56,20 @@ class SellerListView(generics.ListAPIView):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     search_fields = ["sellerBusinessName"]
     pagination_class = CustomSellerPagination
+
+class RetrieveSellerView(generics.RetrieveAPIView):
+    """Retrieve a seller"""
+    serializer_class = SellerSerializer
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        """Retrieve and return a seller"""
+        try:
+            seller = Seller.objects.get(id=self.kwargs["id"])
+        except Seller.DoesNotExist:
+            raise Http404("Seller not found")
+        return seller
 
 
 

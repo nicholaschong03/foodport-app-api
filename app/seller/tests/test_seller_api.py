@@ -19,6 +19,10 @@ def detail_url(seller_id):
     """Create and return a seller detail URL"""
     return reverse("seller:my-sellers-detail", args=[seller_id])
 
+def specific_seller_url(seller_id):
+    """Create and return a specific seller URL"""
+    return reverse("seller:retrieve_seller", args=[seller_id])
+
 def create_user(**params):
     """Create and return user"""
     return get_user_model().objects.create_user(**params)
@@ -216,6 +220,22 @@ class PrivateSellerAPITests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data["results"]),1)
         self.assertEqual(res.data["results"][0]["sellerBusinessName"], seller.sellerBusinessName)
+
+    def test_retrieve_a_specific_seller(self):
+        """Test get seller detail"""
+        other_user = create_user(
+        userEmailAddress="other@example.com",
+        password="password123",
+        userPhoneNumber="+60123456789",
+        userUsername = "otherusername"
+        )
+        seller = create_seller(user=other_user)
+
+        url = specific_seller_url(seller.id)
+        res = self.client.get(url)
+
+        serializer = SellerDetailSerializer(seller)
+        self.assertEqual(res.data, serializer.data)
 
 
 
