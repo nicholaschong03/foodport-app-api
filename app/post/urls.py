@@ -22,5 +22,5 @@ urlpatterns = [
     path("<int:post_id>/likes/", views.PostLikesListView.as_view(), name="post-likes"),
     path("posts/following/", views.FollowingPostsView.as_view(), name="following-post"),
     path("posts/for-you/", views.AllPostsView.as_view(), name =  "for_you-post"),
-    path("posts/<int:pk>", views.SinglePostView.as_view(), name="single-post"),
+    path("posts/<int:pk>/", views.SinglePostView.as_view(), name="single-post"),
 ]
