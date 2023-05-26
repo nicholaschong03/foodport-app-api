@@ -17,8 +17,8 @@ urlpatterns = [
     path("user/<int:id>/", views.RetrieveUserView.as_view(), name="other_user"),
     path("users/", views.UserListView.as_view(), name="user_list"),
     path("users/follow/<int:user_id>/", views.FollowUserView.as_view(), name="follow_user"),
-    path("user/<int:user_id>/followers", views.FollowersListView.as_view(), name = "followers_list"),
-    path("user/<int:user_id>/following", views.FollowingListView.as_view(), name = "following_list"),
-    path("user/<int:user_id>/friends", views.FriendsListView.as_view(), name = "friends_list"),
+    path("user/<int:user_id>/followers/", views.FollowersListView.as_view(), name = "followers_list"),
+    path("user/<int:user_id>/following/", views.FollowingListView.as_view(), name = "following_list"),
+    path("user/<int:user_id>/friends/", views.FriendsListView.as_view(), name = "friends_list"),
 
     ]

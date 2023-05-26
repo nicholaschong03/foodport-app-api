@@ -75,6 +75,17 @@ class PostViewset(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @action(detail=False, methods=["GET"], url_path="for-you/(?P<id>\d+)")
+    def for_you_post(self, request, id=None):
+        """Retrieve a single post for you"""
+        try:
+            post = Post.objects.get(pk=id)
+        except Post.DoesNotExist:
+            return Response({"detail": "Post not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = self.get_serializer(post)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class LikePostView(generics.GenericAPIView):
     authentication_classes = [TokenAuthentication]
