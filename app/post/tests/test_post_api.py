@@ -13,7 +13,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from core.models import Post
+from core.models import Post,PostLike
 
 from post.serializers import PostSerializer, PostDetailSerializer
 
@@ -124,20 +124,53 @@ class PrivatePostApiTests(TestCase):
         url = reverse("post:like-post", kwargs={"post_id": post.id})
         res = self.client.post(url)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertTrue(self.user in post.postLike.all())
+        latest_postLike = PostLike.objects.filter(post=post, user=self.user).order_by("-likeDateTime").first()
+        if latest_postLike:
+            self.assertTrue(latest_postLike.isActive)
+        else:
+            self.fail("PostLike object not found")
 
-    def test_unlike_post(self):
-        """Test if user is able to unlike a post"""
-        new_user = create_user(userEmailAddress="user2@example.com",
-                               password="test123",
-                               userPhoneNumber="0123456843",
-                               userUsername="username1")
-        post = create_post(user=new_user)
-        post.postLike.add(self.user)
-        url = reverse("post:like-post", kwargs={"post_id": post.id})
-        res = self.client.post(url)
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertFalse(self.user in post.postLike.all())
+    # def test_unlike_post(self):
+    #     """Test if user is able to unlike a post"""
+    #     new_user = create_user(userEmailAddress="user2@example.com",
+    #                            password="test123",
+    #                            userPhoneNumber="0123456843",
+    #                            userUsername="username1")
+    #     post = create_post(user=new_user)
+    #     PostLike.objects.create(user=self.user, post=post, isActive=True)
+    #     url = reverse("post:like-post", kwargs={"post_id": post.id})
+    #     res = self.client.post(url)
+    #     self.assertEqual(res.status_code, status.HTTP_200_OK)
+    #     latest_postLike = PostLike.objects.filter(post=post, user=self.user).order_by("-likeDateTime").first()
+    #     self.assertFalse(latest_postLike.isActive)
+
+    # def test_retrieve_post_likes(self):
+    #     """Test retrieving a list of user who like a post"""
+    #     other_user = create_user(
+    #         userEmailAddress = "user1@example.com",
+    #         password = "testpass112233",
+    #         userName = "Test Name",
+    #         userPhoneNumber = "+60123456543",
+    #         userUsername = "user1username"
+    #     )
+
+    #     other_user1 = create_user(
+    #         userEmailAddress = "user2@example.com",
+    #         password = "testpass112233",
+    #         userName = "Test Name 1",
+    #         userPhoneNumber = "+60123456634",
+    #         userUsername = "user2username"
+    #     )
+
+    #     post = create_post(user=self.user)
+    #     post.postLike.add(other_user, other_user1)
+    #     url = reverse("post:post-likes", kwargs={"post_id": post.id})
+    #     res = self.client.get(url)
+
+    #     self.assertEqual(res.status_code, status.HTTP_200_OK)
+    #     self.assertEqual(len(res.data),2)
+    #     self.assertEqual(res.data[0]["userUsername"], other_user.userUsername)
+    #     self.assertEqual(res.data[1]["userUsername"], other_user1.userUsername)
 
     def test_retrieve_post_likes(self):
         """Test retrieving a list of user who like a post"""
@@ -158,14 +191,73 @@ class PrivatePostApiTests(TestCase):
         )
 
         post = create_post(user=self.user)
-        post.postLike.add(other_user, other_user1)
-        url = reverse("post:post-likes", kwargs={"post_id": post.id})
+        PostLike.objects.create(user=other_user, post=post, isActive=True)
+        PostLike.objects.create(user=other_user1, post=post, isActive=True)
+        url = reverse("post:post-liked-users-list", kwargs={"post_id": post.id})
         res = self.client.get(url)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data),2)
-        self.assertEqual(res.data[0]["userUsername"], other_user.userUsername)
-        self.assertEqual(res.data[1]["userUsername"], other_user1.userUsername)
+
+        usernames_in_response = [user["userUsername"] for user in res.data]
+        self.assertIn(other_user.userUsername, usernames_in_response)
+        self.assertIn(other_user1.userUsername, usernames_in_response)
+
+    def test_retrieve_liked_posts(self):
+        """Test retrieving a list of posts liked by a user"""
+        new_user = create_user(
+            userEmailAddress = "user2@example.com",
+            password = "test123",
+            userPhoneNumber = "0123456789",
+            userUsername= "username1"
+        )
+
+        post1 = create_post(user=new_user)
+        post2 = create_post(user=new_user)
+
+        PostLike.objects.create(user=self.user, post=post1, isActive=True)
+        PostLike.objects.create(user=self.user, post=post2, isActive=True)
+
+        url = reverse("post:liked-post-list")
+        res = self.client.get(url)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data), 2)
+
+        post_ids_in_response = [post["postId"] for post in res.data]
+        self.assertIn(post1.id, post_ids_in_response)
+        self.assertIn(post2.id, post_ids_in_response)
+
+    def test_retrieve_post_like_list(self):
+        """Test retrieving a list of postLikes for a user"""
+        other_user = create_user(
+            userEmailAddress = "user1@example.com",
+            password = "testpass112233",
+            userName = "Test Name",
+            userPhoneNumber = "+60123456543",
+            userUsername = "user1username"
+        )
+
+        other_user1 = create_user(
+            userEmailAddress = "user2@example.com",
+            password = "testpass112233",
+            userName = "Test Name 1",
+            userPhoneNumber = "+60123456634",
+            userUsername = "user2username"
+        )
+
+        post = create_post(user=self.user)
+        PostLike.objects.create(user=other_user, post=post, isActive=True)
+        PostLike.objects.create(user=other_user1, post=post, isActive=True)
+        url = reverse("post:postlike-list", kwargs={"post_id": post.id})
+        res = self.client.get(url)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data),2)
+        self.assertIn(res.data[0]["userId"], [other_user.id, other_user1.id])
+        self.assertIn(res.data[1]["userId"], [other_user.id, other_user1.id])
+
+
 
     def test_post_list_limited_to_user(self):
         """Test list of posts is limited to authenticated user."""

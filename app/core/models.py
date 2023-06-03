@@ -128,7 +128,6 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     USERNAME_FIELD = "userEmailAddress"
 
-
 class Post(models.Model):
     """Post object."""
     user = models.ForeignKey(
@@ -161,11 +160,18 @@ class Post(models.Model):
     postShare = models.JSONField(default=dict, blank=True)
     postDishSellerVisit = models.JSONField(default=dict, blank=True)
     postDishVisit = models.JSONField(default=dict, blank=True)
-    postLike = models.ManyToManyField(User, related_name="liked_post", blank=True)
-
+    # postLike = models.ManyToManyField(User, related_name="liked_post", blank=True)
 
     def __str__(self):
         return self.postReview
+
+class PostLike(models.Model):
+    user = models.ForeignKey(User, related_name="likes", on_delete=models.CASCADE)
+    post = models.ForeignKey(Post, related_name="likes", on_delete=models.CASCADE)
+    isActive = models.BooleanField(default=True)
+    likeDateTime = models.DateTimeField(auto_now_add=True)
+    likeIpAddress = models.GenericIPAddressField(null=True, blank=True)
+    likeUserAgent = models.TextField(null=True, blank=True)
 
 class Seller(models.Model):
     """Seller object"""

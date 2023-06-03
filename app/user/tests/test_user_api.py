@@ -323,8 +323,10 @@ class PrivateUserApiTest(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data),2)
-        self.assertEqual(res.data[0]["userUsername"], other_user.userUsername)
-        self.assertEqual(res.data[1]["userUsername"], other_user1.userUsername)
+
+        returned_usernames = [user["userUsername"] for user in res.data]
+        self.assertIn(other_user.userUsername, returned_usernames)
+        self.assertIn(other_user1.userUsername, returned_usernames)
 
     def test_retrieve_followings(self):
         """Test retrieving a following list"""

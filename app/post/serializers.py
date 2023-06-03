@@ -3,7 +3,7 @@ Serializers for posts APIs
 """
 from rest_framework import serializers
 
-from core.models import Post, User
+from core.models import Post, User, PostLike
 
 class PostSerializer(serializers.ModelSerializer):
     """Serializer for Post"""
@@ -12,6 +12,7 @@ class PostSerializer(serializers.ModelSerializer):
     postId = serializers.ReadOnlyField(source="id")
     postPublishIpAddress = serializers.SerializerMethodField()
     postLikeCount = serializers.SerializerMethodField()
+    isLiked = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
@@ -35,8 +36,9 @@ class PostSerializer(serializers.ModelSerializer):
             "postDishVisit",
             "postView",
             "postShare",
+            "isLiked",
         ]
-        read_only_fields = ["id", "userId", "postPublishDateTime"]
+        read_only_fields = ["id", "userId", "postPublishDateTime", "isLiked"]
 
     def get_postPublishDateTime(self, obj):
         return obj.postPublishDateTime.isoformat()
@@ -44,8 +46,17 @@ class PostSerializer(serializers.ModelSerializer):
     def get_postPublishIpAddress(self, obj):
         return obj.postPublishIpAddress
 
+    def get_isLiked(self, obj):
+        request = self.context.get("request", None)
+        if request:
+            user = request.user
+            postLike = PostLike.objects.filter(post=obj, user=user).order_by("-likeDateTime").first()
+            if postLike:
+                return postLike.isActive
+        return False
+
     def get_postLikeCount(self, obj):
-        return obj.postLike.count()
+        return PostLike.objects.filter(post=obj, isActive=True).count()
 
 
 class PostDetailSerializer(PostSerializer):
@@ -53,6 +64,33 @@ class PostDetailSerializer(PostSerializer):
 
     class Meta(PostSerializer.Meta):
         fields = PostSerializer.Meta.fields
+
+class PostLikeSerializer(serializers.ModelSerializer):
+    # user = serializers.PrimaryKeyRelatedField(read_only=True, default=serializers.CurrentUserDefault())
+    # post = serializers.PrimaryKeyRelatedField(queryset=Post.objects.all())
+    userId = serializers.SerializerMethodField(read_only=True)
+    postId = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = PostLike
+        fields = [
+            "id",
+            "postId",
+            "userId",
+            "post",
+            "user",
+            "isActive",
+            "likeDateTime",
+            "likeIpAddress",
+            "likeUserAgent",
+        ]
+
+    def get_userId(self, obj):
+        return obj.user.id
+
+    def get_postId(self, obj):
+        return obj.post.id
+
 
 class PostImageSerializer(serializers.ModelSerializer):
     """Serializer for uploading images to reipes"""
