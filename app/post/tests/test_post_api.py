@@ -130,19 +130,19 @@ class PrivatePostApiTests(TestCase):
         else:
             self.fail("PostLike object not found")
 
-    # def test_unlike_post(self):
-    #     """Test if user is able to unlike a post"""
-    #     new_user = create_user(userEmailAddress="user2@example.com",
-    #                            password="test123",
-    #                            userPhoneNumber="0123456843",
-    #                            userUsername="username1")
-    #     post = create_post(user=new_user)
-    #     PostLike.objects.create(user=self.user, post=post, isActive=True)
-    #     url = reverse("post:like-post", kwargs={"post_id": post.id})
-    #     res = self.client.post(url)
-    #     self.assertEqual(res.status_code, status.HTTP_200_OK)
-    #     latest_postLike = PostLike.objects.filter(post=post, user=self.user).order_by("-likeDateTime").first()
-    #     self.assertFalse(latest_postLike.isActive)
+    def test_unlike_post(self):
+        """Test if user is able to unlike a post"""
+        new_user = create_user(userEmailAddress="user2@example.com",
+                               password="test123",
+                               userPhoneNumber="0123456843",
+                               userUsername="username1")
+        post = create_post(user=new_user)
+        PostLike.objects.create(user=self.user, post=post, isActive=True)
+        url = reverse("post:like-post", kwargs={"post_id": post.id})
+        res = self.client.post(url)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        latest_postLike = PostLike.objects.filter(post=post, user=self.user).order_by("-likeDateTime").first()
+        self.assertFalse(latest_postLike.isActive)
 
     # def test_retrieve_post_likes(self):
     #     """Test retrieving a list of user who like a post"""

@@ -56,7 +56,9 @@ class PostSerializer(serializers.ModelSerializer):
         return False
 
     def get_postLikeCount(self, obj):
-        return PostLike.objects.filter(post=obj, isActive=True).count()
+        like_count = PostLike.objects.filter(post=obj, isActive=True).count()
+        unlike_count = PostLike.objects.filter(post=obj, isActive=False).count()
+        return like_count - unlike_count 
 
 
 class PostDetailSerializer(PostSerializer):
