@@ -71,6 +71,16 @@ class RetrieveSellerView(generics.RetrieveAPIView):
             raise Http404("Seller not found")
         return seller
 
+class AllSellersListView(generics.ListAPIView):
+    """Return a list of all existing menu items"""
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = SellerSerializer
+
+    def get_queryset(self):
+        """Retrieve all the menu items"""
+        return Seller.objects.all().order_by("sellerBusinessName")
+
 
 
 

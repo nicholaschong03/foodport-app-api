@@ -238,6 +238,36 @@ class PrivateSellerAPITests(TestCase):
         self.assertEqual(res.data, serializer.data)
 
 
+    def test_retrieve_all_existing_sellers(self):
+        """Test retrieving all sellers"""
+        user1 = create_user(
+            userEmailAddress="user1@example.com",
+            password="test123",
+            userPhoneNumber="0123456843",
+            userUsername = "username1"
+        )
+        user2 = create_user(
+            userEmailAddress="user2@example.com",
+            password="password123",
+            userPhoneNumber="+60123456789",
+            userUsername = "username2"
+        )
+
+        # create sellers
+        create_seller(user=user1)
+        create_seller(user=user2)
+
+        res = self.client.get(reverse("seller:retrieve_all_seller"))
+
+        # check status code
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+        # check that all sellers are returned
+        self.assertEqual(len(res.data), 2)
+
+
+
+
 
 
 

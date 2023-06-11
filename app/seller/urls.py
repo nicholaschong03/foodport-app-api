@@ -17,6 +17,7 @@ urlpatterns = [
     path("", include(router.urls)),
     path("sellers/", views.SellerListView.as_view(), name = 'seller_list'),
     path('sellers/<int:id>/', views.RetrieveSellerView.as_view(), name='retrieve_seller'),
+    path("sellers/venture-day", views.AllSellersListView.as_view(), name="retrieve_all_seller"),
 
 ]
 
