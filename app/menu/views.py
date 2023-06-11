@@ -93,7 +93,7 @@ class DrinkMenuItemListView(generics.ListAPIView):
 
     def get_queryset(self):
         """Retrieve all the menu items with category 'Drinks'"""
-        return MenuItem.objects.filter(category="Drink").order_by("name")
+        return MenuItem.objects.filter(category="Beverage").order_by("name")
 
 
 class DessertMenuItemListView(generics.ListAPIView):
