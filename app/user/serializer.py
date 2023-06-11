@@ -15,6 +15,8 @@ from django.utils.translation import gettext as _
 
 from core.models import Post, User
 
+from django.db.models import Count, Case, When, IntegerField, F, Sum
+
 
 
 
@@ -103,10 +105,21 @@ class UserSerializer(serializers.ModelSerializer):
         """Method to get the list of follower's ids related to the user"""
         return [following.id for following in obj.following.all()]
 
-    def get_userLikeCount(self,obj):
-        """Method to get the total number of likes related tot he user's posts"""
-        return sum(post.postLike.count() for post in obj.posts.all())
-
+    def get_userLikeCount(self, obj):
+        """Method to get the total number of active likes related to the user's posts"""
+        counts = obj.posts.annotate(
+            likes_count=Count(Case(
+                When(likes__isActive=True, then=1),
+                output_field=IntegerField(),
+            )),
+            unlikes_count=Count(Case(
+                When(likes__isActive=False, then=1),
+                output_field=IntegerField(),
+            )),
+        ).aggregate(
+            total_likes=Sum(F('likes_count') - F('unlikes_count')),
+        )
+        return counts['total_likes'] or 0
 
 class AuthTokenSerializer(serializers.Serializer):
     """Serializer for the user auth token."""

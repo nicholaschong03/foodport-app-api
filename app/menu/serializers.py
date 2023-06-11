@@ -30,7 +30,6 @@ class MenuItemSerializer(serializers.ModelSerializer):
                   "trendingDirection",
                   ]
 
-
 class MenuItemDetailSerializer(MenuItemSerializer):
     """Detail serializer for Menu Item"""
     class Meta(MenuItemSerializer.Meta):

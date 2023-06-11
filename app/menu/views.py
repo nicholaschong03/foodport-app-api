@@ -63,7 +63,7 @@ class RetrieveMenuItemView(generics.RetrieveAPIView):
             menuItem = MenuItem.objects.get(id=self.kwargs["id"])
         except MenuItem.DoesNotExist:
             raise Http404("Menu item not found")
-        return MenuItem
+        return menuItem
 
 class AllMenuItemListView(generics.ListAPIView):
     """Return a list of all existing menu items"""
