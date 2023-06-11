@@ -1,5 +1,6 @@
 server {
     listen ${LISTEN_PORT};
+    server_name api.foodport.com.my;
 
     location /static {
         alias /vol/static;
