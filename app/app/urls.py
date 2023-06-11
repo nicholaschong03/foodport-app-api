@@ -34,6 +34,7 @@ urlpatterns = [
     path("api/v1/", include("post.urls")),
     path("api/v1/", include("seller.urls")),
     path("api/v1/", include("dish.urls")),
+    path("api/v1/", include("menu.urls")),
 ]
 
 if settings.DEBUG:

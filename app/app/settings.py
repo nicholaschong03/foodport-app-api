@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "seller",
     "dish",
     #"django_filter",
+    "menu",
 ]
 
 MIDDLEWARE = [

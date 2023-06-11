@@ -211,3 +211,51 @@ class Dish(models.Model):
     sellerId = models.IntegerField(null=True, blank=True)
     postId = models.JSONField(null=True, blank=True, default=list)
     dishInfoContributor = models.JSONField(default=dict, blank=True)
+
+
+class MenuItem(models.Model):
+    """Menu object"""
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        null=True
+    )
+    name = models.CharField(max_length=255)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    postId = models.JSONField(null=True, blank=True, default=list)
+    dishInfoContributor = models.JSONField(default=dict, blank=True, null=True)
+    sellerId = models.IntegerField(null=True, blank=True)
+    category = models.CharField(max_length=255)
+
+    basicIngredient = models.JSONField(default=list, blank=True, null=True)
+    compositeIngredient = models.JSONField(default=list, blank=True, null=True)
+    nutritionFacts = models.JSONField(default=dict, blank=True, null=True)
+    totalPostCount = models.IntegerField(default=0)
+
+
+    eatAgainRating = models.FloatField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        blank=False, null=True,
+        error_messages={"blank": "Please provide a rating from 1 to 5"})
+    deliciousRating = models.FloatField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        blank=False, null=True,
+        error_messages={"blank": "Please provide a rating from 1 to 5"})
+    worthItRating = models.FloatField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        blank=False, null=True,
+        error_messages={"blank": "Please provide a rating from 1 to 5"})
+
+    trendingPosition = models.IntegerField(null=True, blank=True)
+    trendingDirection = models.CharField(max_length=255, null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+
+
+
+
+
+
+
+
