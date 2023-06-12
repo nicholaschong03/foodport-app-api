@@ -53,7 +53,7 @@ class MenuItemListView(generics.ListAPIView):
 
 class RetrieveMenuItemView(generics.RetrieveAPIView):
     """Retrieve a menu item"""
-    serializer_class = MenuItemSerializer
+    serializer_class = MenuItemDetailSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 

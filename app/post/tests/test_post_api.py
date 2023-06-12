@@ -38,6 +38,7 @@ def create_post(user, **params):
         "postRatingEatAgain": 3,
         "postRatingWorthIt": 2,
     }
+    defaults.update(params)
     post = Post.objects.create(user=user, **defaults)
     return post
 
@@ -256,6 +257,65 @@ class PrivatePostApiTests(TestCase):
         self.assertEqual(len(res.data),2)
         self.assertIn(res.data[0]["userId"], [other_user.id, other_user1.id])
         self.assertIn(res.data[1]["userId"], [other_user.id, other_user1.id])
+
+    def test_retrieve_menus_category_food(self):
+        """Test retrieving menus where category is 'Food'"""
+        # create users
+        user1 = create_user(
+            userEmailAddress="user1@example.com",
+            password="test123",
+            userPhoneNumber="0123456843",
+            userUsername="username1"
+        )
+        user2 = create_user(
+            userEmailAddress="user2@example.com",
+            password="password123",
+            userPhoneNumber="+60123456789",
+            userUsername="username2"
+        )
+
+        create_post(
+            user=user1,
+            postReview="very delicious",
+            postRatingDelicious=5,
+            postRatingEatAgain=3,
+            postRatingWorthIt=2,
+            menuItemId=1
+
+        )
+
+        create_post(
+            user=user2,
+            postReview="very delicious",
+            postRatingDelicious=5,
+            postRatingEatAgain=3,
+            postRatingWorthIt=2,
+            menuItemId=1
+
+        )
+
+
+        create_post(
+            user=self.user,
+            postReview="very delicious",
+            postRatingDelicious=5,
+            postRatingEatAgain=3,
+            postRatingWorthIt=2,
+            menuItemId=2
+
+        )
+
+        # perform get request with filter on menuItemId= 1
+        url = reverse("post:for-you-post-feed")
+        res = self.client.get(url, {"menuItemId": 1})
+
+
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+
+        self.assertEqual(len(res.data['results']), 2)
+
 
 
 

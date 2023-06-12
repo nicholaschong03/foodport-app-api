@@ -161,6 +161,7 @@ class Post(models.Model):
     postDishSellerVisit = models.JSONField(default=dict, blank=True)
     postDishVisit = models.JSONField(default=dict, blank=True)
     # postLike = models.ManyToManyField(User, related_name="liked_post", blank=True)
+    postLikeCount = models.IntegerField(default=0)
 
     def __str__(self):
         return self.postReview
@@ -172,6 +173,14 @@ class PostLike(models.Model):
     likeDateTime = models.DateTimeField(auto_now_add=True)
     likeIpAddress = models.GenericIPAddressField(null=True, blank=True)
     likeUserAgent = models.TextField(null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        post = self.post
+        like_count = PostLike.objects.filter(post=post, isActive=True).count()
+        unlike_count = PostLike.objects.filter(post=post, isActive=True).count()
+        post.postLikeCount = like_count - unlike_count
+        post.save()
 
 class Seller(models.Model):
     """Seller object"""

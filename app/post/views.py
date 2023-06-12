@@ -2,11 +2,15 @@
 Views for the post APIs.
 """
 
-from rest_framework import viewsets, status, generics
+from rest_framework import viewsets, status, generics, filters
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
+
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.pagination import PageNumberPagination
+
 
 from core.models import Post, PostLike, User
 from post import serializers
@@ -50,6 +54,11 @@ class PostViewset(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class CustomPostPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = "page_size"
+    max_page_size = 100
 
 class LikePostView(generics.GenericAPIView):
     """this view is for users to like a post"""
@@ -154,3 +163,14 @@ class SinglePostView(generics.RetrieveAPIView):
     serializer_class = serializers.PostSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
+
+class SearchFilterPostsView(generics.ListAPIView):
+    serializer_class = serializers.PostSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    queryset= Post.objects.all().order_by("-postLikeCount")
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ["menuItemId"]
+    pagination_class = CustomPostPagination
+

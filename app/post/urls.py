@@ -22,6 +22,7 @@ urlpatterns = [
     # path("<int:post_id>/likes/", views.PostLikesListView.as_view(), name="post-likes"),
     path("posts/following/", views.FollowingPostsView.as_view(), name="following-post"),
     path("posts/for-you/", views.AllPostsView.as_view(), name =  "for-you-post"),
+    path("posts/feed/for-you/", views.SearchFilterPostsView.as_view(), name= "for-you-post-feed"),
     path("posts/<int:pk>/", views.SinglePostView.as_view(), name="single-post"),
     path("postlike/<int:post_id>/", views.PostLikeListView.as_view(), name="postlike-list"),
     path("posts/liked/", views.UserlikedPostsListView.as_view(), name="liked-post-list"),
