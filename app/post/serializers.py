@@ -25,7 +25,7 @@ class PostSerializer(serializers.ModelSerializer):
             "postRatingEatAgain",
             "postRatingWorthIt",
             "postPhotoUrl",
-            "dishId",
+            "menuItemId",
             "postPublishIpAddress",
             "postView",
             "postLikeCount",
@@ -58,7 +58,7 @@ class PostSerializer(serializers.ModelSerializer):
     def get_postLikeCount(self, obj):
         like_count = PostLike.objects.filter(post=obj, isActive=True).count()
         unlike_count = PostLike.objects.filter(post=obj, isActive=False).count()
-        return like_count - unlike_count 
+        return like_count - unlike_count
 
 
 class PostDetailSerializer(PostSerializer):

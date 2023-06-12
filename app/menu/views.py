@@ -41,13 +41,13 @@ class CustomMenuItemPagination(PageNumberPagination):
 
 class MenuItemListView(generics.ListAPIView):
     """Return a list of menu filtered by menu item Name and seach query"""
-    permissions_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [authentication.TokenAuthentication]
     serializer_class = MenuItemSerializer
 
     queryset = MenuItem.objects.all().order_by("name")
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ["sellerId"]
+    filterset_fields = ["category", "sellerId"]
     search_fields = ["name"]
     pagination_class = CustomMenuItemPagination
 
@@ -75,36 +75,19 @@ class AllMenuItemListView(generics.ListAPIView):
         """Retrieve all the menu items"""
         return MenuItem.objects.all().order_by("name")
 
-class FoodMenuItemListView(generics.ListAPIView):
-    """Return a list of all existing menu items with category set to 'Food'"""
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
-    serializer_class = MenuItemSerializer
 
-    def get_queryset(self):
-        """Retrieve all the menu items with category 'Food'"""
-        return MenuItem.objects.filter(category="Food").order_by("name")
+# class CategoryMenuItemListView(generics.ListAPIView):
+#     """Return a list of all existing menu items based on category"""
+#     permission_classes = [permissions.IsAuthenticated]
+#     authentication_classes = [authentication.TokenAuthentication]
+#     serializer_class = MenuItemSerializer
 
-class DrinkMenuItemListView(generics.ListAPIView):
-    """Return a list of all existing menu items with category set to 'drink'"""
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
-    serializer_class = MenuItemSerializer
+#     queryset = MenuItem.objects.all().order_by("name")
+#     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+#     filterset_fields = ["category", "sellerId"]
+#     search_fields = ["name"]
+#     pagination_class = CustomMenuItemPagination
 
-    def get_queryset(self):
-        """Retrieve all the menu items with category 'Drinks'"""
-        return MenuItem.objects.filter(category="Beverage").order_by("name")
-
-
-class DessertMenuItemListView(generics.ListAPIView):
-    """Return a list of all existing menu items with category set to 'dessert'"""
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
-    serializer_class = MenuItemSerializer
-
-    def get_queryset(self):
-        """Retrieve all the menu items with category 'dessert'"""
-        return MenuItem.objects.filter(category="Dessert").order_by("name")
 
 
 

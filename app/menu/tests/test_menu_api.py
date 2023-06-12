@@ -14,10 +14,6 @@ from menu.serializers import MenuItemSerializer, MenuItemDetailSerializer
 
 MY_MENU_URL = reverse("menu:my-menu-list")
 MENU_LIST_URL = reverse("menu:menu-list")
-ALL_MENU_LIST = reverse("menu:retrieve-nearby-menu")
-FOOD_MENU_LIST = reverse("menu:retrieve-food-menu")
-DRINK_MENU_LIST = reverse("menu:retrieve-drink-menu")
-DESSERT_MENU_LIST=reverse("menu:retrieve-dessert-menu")
 
 def detail_url(menu_id):
     """Create and return a users' own menu detail URL"""
@@ -256,6 +252,7 @@ class PrivateMenuAPITests(TestCase):
         # check that all menus are returned
         self.assertEqual(len(res.data["results"]), 2)
 
+
     def test_retrieve_menus_category_food(self):
         """Test retrieving menus where category is 'Food'"""
         # create users
@@ -263,30 +260,48 @@ class PrivateMenuAPITests(TestCase):
             userEmailAddress="user1@example.com",
             password="test123",
             userPhoneNumber="0123456843",
-            userUsername = "username1"
+            userUsername="username1"
         )
         user2 = create_user(
             userEmailAddress="user2@example.com",
             password="password123",
             userPhoneNumber="+60123456789",
-            userUsername = "username2"
+            userUsername="username2"
         )
 
-        # create menus with category "Food"
-        create_menu(user=user1, category="Food")
-        create_menu(user=user2, category="Food")
+        create_menu(
+            user=user1,
+            name = "laksa",
+            price = 12.50,
+            sellerId = 1,
+            category = "Food")
+
+        create_menu(
+            user=user2,
+            name = "Nasi Lemak",
+            price = 12.50,
+            sellerId = 1,
+            category = "Food")
+
 
         # create a menu with different category
-        create_menu(user=user2, category="Drink")
+        create_menu(
+            user=user1,
+            name = "laksa",
+            price = 12.50,
+            category = "Beverage")
 
         # perform get request with filter on category="Food"
-        res = self.client.get(FOOD_MENU_LIST, {"category": "Food"})
+        url = reverse("menu:retrieve-filter-menu")
+        res = self.client.get(url, {"category": "Food"})
+
 
         # check status code
         self.assertEqual(res.status_code, status.HTTP_200_OK)
 
         # check that only menus with category "Food" are returned
-        self.assertEqual(len(res.data), 2)
+        self.assertEqual(len(res.data['results']), 2)
+
 
 
 

@@ -150,7 +150,7 @@ class Post(models.Model):
         blank=False,
         error_messages={"blank": "Please provide a rating from 1 to 5"})
     postPublishIpAddress = models.GenericIPAddressField(null=True, blank=True)
-    dishId= models.IntegerField(null=True, blank=True, default=0)
+    menuItemId= models.IntegerField(null=True, blank=True, default=0)
     postPhotoUrl = models.ImageField(null=True, upload_to=post_image_file_path)
     postView = models.JSONField(default=dict, blank=True)
     #postLike = models.JSONField(default=dict, blank=True)
