@@ -7,13 +7,17 @@ from decimal import Decimal, InvalidOperation
 
 from core.models import MenuItem, Post
 
+from django.db.models import Avg
+
 from django.conf import settings
-import os
 
 class MenuItemSerializer(serializers.ModelSerializer):
     """Serializer for menu item """
     id = serializers.ReadOnlyField()
     post_photo_url = serializers.SerializerMethodField()
+    delicious_rating = serializers.SerializerMethodField()
+    eat_again_rating = serializers.SerializerMethodField()
+    worth_it_rating = serializers.SerializerMethodField()
     class Meta:
         model = MenuItem
         fields = ["id",
@@ -22,6 +26,9 @@ class MenuItemSerializer(serializers.ModelSerializer):
                   "category",
                   "post_photo_url",
                   "sellerId",
+                  "delicious_rating",
+                  "eat_again_rating",
+                  "worth_it_rating",
                   ]
 
     def get_post_photo_url(self, obj):
@@ -31,6 +38,18 @@ class MenuItemSerializer(serializers.ModelSerializer):
            photo_url = post.postPhotoUrl.url
            return request.build_absolute_uri(photo_url)
        return None
+
+    def get_delicious_rating(self, obj):
+        avg_rating = Post.objects.filter(menuItemId=obj.id).aggregate(Avg('postRatingDelicious'))
+        return avg_rating["postRatingDelicious__avg"]
+
+    def get_eat_again_rating(self, obj):
+        avg_rating = Post.objects.filter(menuItemId=obj.id).aggregate(Avg('postRatingDelicious'))
+        return avg_rating["postRatingDelicious__avg"]
+
+    def get_worth_it_rating(self, obj):
+        avg_rating = Post.objects.filter(menuItemId=obj.id).aggregate(Avg('postRatingDelicious'))
+        return avg_rating["postRatingDelicious__avg"]
 
 
 class MenuItemDetailSerializer(MenuItemSerializer):
@@ -44,9 +63,6 @@ class MenuItemDetailSerializer(MenuItemSerializer):
                   "postId",
                   "dishInfoContributor",
                   "totalPostCount",
-                  "deliciousRating",
-                  "eatAgainRating",
-                  "worthItRating",
                   "trendingPosition",
                   "trendingDirection",
                   "post_photos_url"]

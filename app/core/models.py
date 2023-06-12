@@ -196,7 +196,7 @@ class Seller(models.Model):
     sellerHalal = models.BooleanField(default=False)
     sellerOwnerId = models.IntegerField(null=True, blank=True)
     sellerInfoContributor = models.JSONField(null=True, blank=True)
-    dishId = models.JSONField(blank=True, null=True, default=list)
+    menuItemId = models.JSONField(blank=True, null=True, default=list)
 
     def __str__(self):
         return self.sellerBusinessName
@@ -242,18 +242,18 @@ class MenuItem(models.Model):
     totalPostCount = models.IntegerField(default=0)
 
 
-    eatAgainRating = models.FloatField(
-        validators=[MinValueValidator(1), MaxValueValidator(5)],
-        blank=False, null=True,
-        error_messages={"blank": "Please provide a rating from 1 to 5"})
-    deliciousRating = models.FloatField(
-        validators=[MinValueValidator(1), MaxValueValidator(5)],
-        blank=False, null=True,
-        error_messages={"blank": "Please provide a rating from 1 to 5"})
-    worthItRating = models.FloatField(
-        validators=[MinValueValidator(1), MaxValueValidator(5)],
-        blank=False, null=True,
-        error_messages={"blank": "Please provide a rating from 1 to 5"})
+    # eatAgainRating = models.FloatField(
+    #     validators=[MinValueValidator(1), MaxValueValidator(5)],
+    #     blank=False, null=True,
+    #     error_messages={"blank": "Please provide a rating from 1 to 5"})
+    # deliciousRating = models.FloatField(
+    #     validators=[MinValueValidator(1), MaxValueValidator(5)],
+    #     blank=False, null=True,
+    #     error_messages={"blank": "Please provide a rating from 1 to 5"})
+    # worthItRating = models.FloatField(
+    #     validators=[MinValueValidator(1), MaxValueValidator(5)],
+    #     blank=False, null=True,
+    #     error_messages={"blank": "Please provide a rating from 1 to 5"})
 
     trendingPosition = models.IntegerField(null=True, blank=True)
     trendingDirection = models.CharField(max_length=255, null=True, blank=True)

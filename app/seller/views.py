@@ -59,7 +59,7 @@ class SellerListView(generics.ListAPIView):
 
 class RetrieveSellerView(generics.RetrieveAPIView):
     """Retrieve a seller"""
-    serializer_class = SellerSerializer
+    serializer_class = SellerDetailSerializer
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 

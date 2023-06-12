@@ -171,6 +171,6 @@ class SearchFilterPostsView(generics.ListAPIView):
 
     queryset= Post.objects.all().order_by("-postLikeCount")
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ["menuItemId"]
+    filterset_fields = ["menuItemId", "user"]
     pagination_class = CustomPostPagination
 
