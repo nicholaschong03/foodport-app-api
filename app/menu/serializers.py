@@ -20,7 +20,8 @@ class MenuItemSerializer(serializers.ModelSerializer):
                   "name",
                   "price",
                   "category",
-                  "post_photo_url"
+                  "post_photo_url",
+                  "sellerId",
                   ]
 
     def get_post_photo_url(self, obj):
@@ -40,7 +41,6 @@ class MenuItemDetailSerializer(MenuItemSerializer):
                   "basicIngredient",
                   "compositeIngredient",
                   "nutritionFacts",
-                  "sellerId",
                   "postId",
                   "dishInfoContributor",
                   "totalPostCount",
