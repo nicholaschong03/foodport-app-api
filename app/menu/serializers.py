@@ -23,7 +23,7 @@ class MenuItemSerializer(serializers.ModelSerializer):
     def get_post_photo_url(self, obj):
        post = Post.objects.filter(menuItemId=obj.id).order_by("-postLikeCount").first()
        if post and post.postPhotoUrl:
-           return post.postPhotoUrl.url
+           return post.postPhotoUrl
        return None
 
 
@@ -48,7 +48,7 @@ class MenuItemDetailSerializer(MenuItemSerializer):
 
     def get_post_photos_url(self, obj):
         posts = Post.objects.filter(menuItemId=obj.id).order_by("-postLikeCount")
-        return {post.id: post.postPhotoUrl.url for post in posts if post.postPhotoUrl}
+        return {post.id: post.postPhotoUrl for post in posts if post.postPhotoUrl}
 
 
 
