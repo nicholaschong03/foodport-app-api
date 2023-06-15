@@ -20,7 +20,7 @@ from django.conf import settings
 from rest_framework.views import APIView
 
 from social_django.utils import load_strategy, load_backend
-#from social_core.exceptions import Missingbackend
+from social_core.exceptions import MissingBackend
 from social_core.backends.oauth import BaseOAuth2
 
 
@@ -61,28 +61,36 @@ class GoogleAuthView(APIView):
         strategy = load_strategy(request)
         backend = load_backend(strategy=strategy, name='google-oauth2', redirect_uri=None)
 
-        if isinstance(backend, BaseOAuth2):
-            # Check if user is authenticated
-            if not request.user.is_authenticated:
-                # Generate the social token
-                social = backend.do_auth(access_token=request.data['access_token'])
+
+        try:
+
+            if isinstance(backend, BaseOAuth2):
+                # Check if user is authenticated
+                if not request.user.is_authenticated:
+                    # Generate the social token
+                    social = backend.do_auth(access_token=request.data['access_token'])
+                else:
+                    social = backend.do_auth(access_token=request.data['access_token'], user=request.user)
+
+                if social and social.user:
+                    social.user.set_unusable_password()
+                    social.user.save()
+                    token, _ = Token.objects.get_or_create(user=social.user)
+
+                    return Response({
+                        "token": token.key,
+                        "localId": social.user.pk,
+                        "expiresIn": settings.EXPIR
+                    }, status=status.HTTP_200_OK)
+
             else:
-                social = backend.do_auth(access_token=request.data['access_token'], user=request.user)
-
-            if social and social.user:
-                social.user.set_unusable_password()
-                social.user.save()
-                token, _ = Token.objects.get_or_create(user=social.user)
-
                 return Response({
-                    "token": token.key,
-                    "localId": social.user.pk,
-                    "expiresIn": settings.EXPIRATION_TIME,
-                }, status=status.HTTP_200_OK)
+                    "error": "Wrong backend type"
+                }, status=status.HTTP_400_BAD_REQUEST)
 
-        else:
+        except MissingBackend:
             return Response({
-                "error": "Wrong backend type"
+                "error": "Backend not found"
             }, status=status.HTTP_400_BAD_REQUEST)
 
 
