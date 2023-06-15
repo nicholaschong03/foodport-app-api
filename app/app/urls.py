@@ -35,6 +35,8 @@ urlpatterns = [
     path("api/v1/", include("seller.urls")),
     path("api/v1/", include("dish.urls")),
     path("api/v1/", include("menu.urls")),
+    path("auth/", include("social_django.urls", namespace="social")),
+
 ]
 
 if settings.DEBUG:
