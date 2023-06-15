@@ -17,13 +17,6 @@ from core.models import User
 from rest_framework import status
 from django.conf import settings
 
-from rest_framework.views import APIView
-
-from social_django.utils import load_strategy, load_backend
-from social_core.exceptions import MissingBackend
-from social_core.backends.oauth import BaseOAuth2
-
-
 from ip2geotools.databases.noncommercial import DbIpCity
 
 import os
@@ -55,43 +48,7 @@ class CreateTokenView(ObtainAuthToken):
         }
         return Response(response_data, status=status.HTTP_200_OK)
 
-class GoogleAuthView(APIView):
 
-    def post(self, request):
-        strategy = load_strategy(request)
-        backend = load_backend(strategy=strategy, name='google-oauth2', redirect_uri=None)
-
-
-        try:
-
-            if isinstance(backend, BaseOAuth2):
-                # Check if user is authenticated
-                if not request.user.is_authenticated:
-                    # Generate the social token
-                    social = backend.do_auth(access_token=request.data['access_token'])
-                else:
-                    social = backend.do_auth(access_token=request.data['access_token'], user=request.user)
-
-                if social and social.user:
-                    social.user.set_unusable_password()
-                    social.user.save()
-                    token, _ = Token.objects.get_or_create(user=social.user)
-
-                    return Response({
-                        "token": token.key,
-                        "localId": social.user.pk,
-                        "expiresIn": settings.EXPIR
-                    }, status=status.HTTP_200_OK)
-
-            else:
-                return Response({
-                    "error": "Wrong backend type"
-                }, status=status.HTTP_400_BAD_REQUEST)
-
-        except MissingBackend:
-            return Response({
-                "error": "Backend not found"
-            }, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ManagerUserView(generics.RetrieveUpdateAPIView):
