@@ -11,7 +11,7 @@ class PostSerializer(serializers.ModelSerializer):
     userId = serializers.ReadOnlyField(source="user.id")
     postId = serializers.ReadOnlyField(source="id")
     postPublishIpAddress = serializers.SerializerMethodField()
-    postLikeCount = serializers.IntegerField(read_only=True)
+    postLikeCount = serializers.SerializerMethodField()
     isLiked = serializers.SerializerMethodField()
 
     class Meta:
