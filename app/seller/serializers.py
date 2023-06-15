@@ -24,7 +24,9 @@ class SellerSerializer(serializers.ModelSerializer):
                   "eat_again_rating",
                   "worth_it_rating",
                   "lowest_price",
-                  "highest_price"
+                  "highest_price",
+                  "sellerOperatingLocation",
+
                   ]
 
 
@@ -84,7 +86,6 @@ class SellerDetailSerializer(SellerSerializer):
     class Meta(SellerSerializer.Meta):
 
         fields = SellerSerializer.Meta.fields + [
-                  "sellerOperatingLocation",
                   "sellerOperatingTime",
                   "sellerVerified",
                   "sellerSafeFood",
