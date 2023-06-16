@@ -316,6 +316,51 @@ class PrivatePostApiTests(TestCase):
 
         self.assertEqual(len(res.data['results']), 2)
 
+    def test_return_rating_review(self):
+
+        post1 = create_post(
+            user=self.user,
+            postReview="fucking bad",
+            postRatingDelicious=4.5,
+            postRatingEatAgain=4.2,
+            postRatingWorthIt=4.8,
+            menuItemId=1
+
+        )
+
+        post2 = create_post(
+            user=self.user,
+            postReview="very tasty",
+            postRatingDelicious=3.8,
+            postRatingEatAgain=4.5,
+            postRatingWorthIt=4.0,
+            menuItemId=1
+
+        )
+
+
+        post3 = create_post(
+            user=self.user,
+            postReview="very delicious",
+            postRatingDelicious=4.2,
+            postRatingEatAgain=4.0,
+            postRatingWorthIt=4.3,
+            menuItemId=2
+
+        )
+
+        url = reverse("post:review-rating-post")
+
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+        serializer_data = res.data
+        self.assertEqual(len(serializer_data["results"]), 3)
+
+
+
+
+
 
 
 

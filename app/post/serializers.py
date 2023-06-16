@@ -93,6 +93,20 @@ class PostLikeSerializer(serializers.ModelSerializer):
     def get_postId(self, obj):
         return obj.post.id
 
+class PostReviewRatingSerializer(serializers.ModelSerializer):
+    """Serializer for filtering Post objects by menuItemId"""
+    postId = serializers.ReadOnlyField(source="id")
+
+    class Meta:
+        model = Post
+        fields = [
+            "postId",
+            "postReview",
+            "postRatingEatAgain",
+            "postRatingWorthIt",
+            "postRatingDelicious",
+        ]
+
 
 class PostImageSerializer(serializers.ModelSerializer):
     """Serializer for uploading images to reipes"""

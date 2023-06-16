@@ -27,7 +27,9 @@ from social_core.backends.oauth import BaseOAuth2
 from ip2geotools.databases.noncommercial import DbIpCity
 
 import os
-import requests
+
+import firebase_admin
+from firebase_admin import auth
 
 
 class CreateUserView(generics.CreateAPIView):
@@ -55,49 +57,98 @@ class CreateTokenView(ObtainAuthToken):
             "expiresIn": settings.EXPIRATION_TIME,
         }
         return Response(response_data, status=status.HTTP_200_OK)
-    
 
-class GoogleAuthView(APIView):
+
+# class GoogleAuthView(APIView):
+
+#     def post(self, request):
+#         strategy = load_strategy(request)
+#         backend = load_backend(strategy=strategy, name='google-oauth2', redirect_uri=None)
+
+
+#         try:
+
+#             if isinstance(backend, BaseOAuth2):
+#                 # Check if user is authenticated
+#                 access_token = request.data.get("access_token")
+#                 if not access_token:
+#                     return Response({"error": "Missing access token"}, status=status.HTTP_400_BAD_REQUEST)
+
+#                 if not request.user.is_authenticated:
+#                     # Generate the social token
+#                     social = backend.do_auth(access_token=access_token)
+#                 else:
+#                     social = backend.do_auth(access_token=access_token, user=request.user)
+
+#                 if social and social.user:
+#                     social.user.set_unusable_password()
+#                     social.user.save()
+#                     token, _ = Token.objects.get_or_create(user=social.user)
+
+#                     return Response({
+#                         "token": token.key,
+#                         "localId": social.user.id,
+#                         "expiresIn": settings.EXPIRATION_TIME
+#                     }, status=status.HTTP_200_OK)
+
+#             else:
+#                 return Response({
+#                     "error": "Wrong backend type"
+#                 }, status=status.HTTP_400_BAD_REQUEST)
+
+#         except MissingBackend:
+#             return Response({
+#                 "error": "Backend not found"
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class FirebaseAuthView(APIView):
+    """Log in or register a user using a Firebase token."""
 
     def post(self, request):
-        strategy = load_strategy(request)
-        backend = load_backend(strategy=strategy, name='google-oauth2', redirect_uri=None)
+        id_token = request.data.get("idToken")
+        local_id = request.data.get("localId")
+        if local_id:
+            # If localId is provided, the user is already logged in before, try to find them and return the token
+            try:
+                user = User.objects.get(id=local_id)
+                token = Token.objects.get(user=user)
+                response_data = {
+                    "idToken": token.key,
+                    "localId": user.id,
+                    "expiresIn": settings.EXPIRATION_TIME,
+                }
+                return Response(response_data, status=status.HTTP_200_OK)
+            except User.DoesNotExist:
+                return Response({"error": "User does not exist"}, status=status.HTTP_404_NOT_FOUND)
+            except Token.DoesNotExist:
+                return Response({"error": "Token does not exist"}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            # If localId is not provided, verify the id_token with Firebase
+            if not id_token:
+                return Response({"error": "Missing ID token"}, status=status.HTTP_400_BAD_REQUEST)
 
+            try:
+                decoded_token = auth.verify_id_token(id_token)
+                firebase_uid = decoded_token["uid"]
+            except ValueError as exc:
+                return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
+            try:
+                user = User.objects.get(firebase_uid=firebase_uid)
+            except User.DoesNotExist:
+                user_email = decoded_token.get("email")
 
-            if isinstance(backend, BaseOAuth2):
-                # Check if user is authenticated
-                access_token = request.data.get("access_token")
-                if not access_token:
-                    return Response({"error": "Missing access token"}, status=status.HTTP_400_BAD_REQUEST)
+                user = User.objects.create_user(userEmailAddress= user_email, firebase_uid = firebase_uid)
+                user.save()
 
-                if not request.user.is_authenticated:
-                    # Generate the social token
-                    social = backend.do_auth(access_token=access_token)
-                else:
-                    social = backend.do_auth(access_token=access_token, user=request.user)
-
-                if social and social.user:
-                    social.user.set_unusable_password()
-                    social.user.save()
-                    token, _ = Token.objects.get_or_create(user=social.user)
-
-                    return Response({
-                        "token": token.key,
-                        "localId": social.user.id,
-                        "expiresIn": settings.EXPIRATION_TIME
-                    }, status=status.HTTP_200_OK)
-
-            else:
-                return Response({
-                    "error": "Wrong backend type"
-                }, status=status.HTTP_400_BAD_REQUEST)
-
-        except MissingBackend:
-            return Response({
-                "error": "Backend not found"
-            }, status=status.HTTP_400_BAD_REQUEST)
+            token, _ = Token.objects.get_or_create(user=user)
+            response_data = {
+                "idToken": token.key,
+                "localId": user.id,
+                "expiresIn": settings.EXPIRATION_TIME,
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
 
 
 

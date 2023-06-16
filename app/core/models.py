@@ -54,13 +54,13 @@ class UserManager(BaseUserManager):
                 return username
 
 
-    def create_user(self, userEmailAddress, userUsername="", password=None, **extra_field):
+    def create_user(self, userEmailAddress, firebase_uid=None, userUsername="", password=None, **extra_field):
         """Create, save and return a new user"""
         if not userEmailAddress:
             raise ValueError("User must have an email address")
         if not userUsername:
             userUsername = self._generate_unique_username()
-        user = self.model(userEmailAddress=self.normalize_email(userEmailAddress), userUsername=userUsername, **extra_field)
+        user = self.model(userEmailAddress=self.normalize_email(userEmailAddress), userUsername=userUsername, firebase_uid=firebase_uid, **extra_field)
         user.set_password(password)
         user.save(using=self._db)
 
@@ -86,6 +86,7 @@ class NullablePhoneNumberField(PhoneNumberField):
 class User(AbstractBaseUser, PermissionsMixin):
     """User in the system."""
     userEmailAddress = models.EmailField(max_length=255, unique=True)
+    firebase_uid = models.CharField(max_length=255, unique=True, null=True)
     userName = models.CharField(max_length=255, blank=True)
     userPhoneNumber = NullablePhoneNumberField(unique=True, blank=True, null=True)
     userUsername = models.CharField(max_length=255, unique=True)

@@ -174,3 +174,13 @@ class SearchFilterPostsView(generics.ListAPIView):
     filterset_fields = ["menuItemId", "user"]
     pagination_class = CustomPostPagination
 
+class ReturnRatingReviewPostsView(generics.ListAPIView):
+    serializer_class = serializers.PostReviewRatingSerializer
+    authentication_class = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    queryset = Post.objects.all().order_by("-postRatingEatAgain", "-postRatingWorthIt", "-postRatingDelicious")
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ["menuItemId"]
+    pagination_class = CustomPostPagination
+
