@@ -88,7 +88,7 @@ class GoogleAuthView(APIView):
 
                         return Response({
                             "token": token.key,
-                            "localId": social.user.id,
+                            "localId": social.user.pk,
                             "expiresIn": settings.EXPIRATION_TIME
                         }, status=status.HTTP_200_OK)
 
@@ -97,10 +97,10 @@ class GoogleAuthView(APIView):
                         "error": "Wrong backend type"
                     }, status=status.HTTP_400_BAD_REQUEST)
 
-            except MissingBackend:
-                return Response({
-                    "error": "Backend not found"
-                }, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                return JsonResponse({
+                    "error": str(e)
+                }, status=500)
         else:
             return JsonResponse({"error": "Invalid token"}, status=400)
 
