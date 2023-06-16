@@ -79,8 +79,8 @@ class GoogleAuthView(APIView):
 
                     return Response({
                         "token": token.key,
-                        "localId": social.user.pk,
-                        "expiresIn": settings.EXPIR
+                        "localId": social.user.id,
+                        "expiresIn": settings.EXPIRATION_TIME
                     }, status=status.HTTP_200_OK)
 
             else:
