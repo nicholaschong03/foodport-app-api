@@ -13,6 +13,10 @@ server {
 
     location /static {
         alias /vol/static;
+        add_header 'Access-Control-Allow-Origin' 'https://app.foodport.com.my' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
+        add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization';
+        add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range';
     }
 
     location / {
