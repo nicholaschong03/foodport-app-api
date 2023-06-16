@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.authtoken.models import Token
 from rest_framework import filters
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
 from user.serializer import UserSerializer, AuthTokenSerializer, UserProfileImageSerializer, UsersListSerializer, UserProfileCoverSerializer
@@ -27,6 +27,7 @@ from social_core.backends.oauth import BaseOAuth2
 from ip2geotools.databases.noncommercial import DbIpCity
 
 import os
+import requests
 
 
 class CreateUserView(generics.CreateAPIView):
@@ -58,23 +59,27 @@ class CreateTokenView(ObtainAuthToken):
 class GoogleAuthView(APIView):
 
     def post(self, request):
+        id_token = request.data.get("id_token")
+
+        # verify the token
+        google_response = requests.get(f'https://oauth2.googleapis.com/tokeninfo?id_token={id_token}')
+
+        #Check if the token is valid
+        if google_response.status_code == 200:
+            user_info = google_response.json()
+
         strategy = load_strategy(request)
         backend = load_backend(strategy=strategy, name='google-oauth2', redirect_uri=None)
-
 
         try:
 
             if isinstance(backend, BaseOAuth2):
-                # Check if user is authenticated
-                access_token = request.data.get("access_token")
-                if not access_token:
-                    return Response({"error": "Missing access token"}, status=status.HTTP_400_BAD_REQUEST)
-
+                # If the user is not authenticated, generate the social token
                 if not request.user.is_authenticated:
                     # Generate the social token
-                    social = backend.do_auth(access_token=access_token)
+                    social = backend.do_auth(access_token=id_token)
                 else:
-                    social = backend.do_auth(access_token=access_token, user=request.user)
+                    social = backend.do_auth(access_token=id_token, user=request.user)
 
                 if social and social.user:
                     social.user.set_unusable_password()
@@ -96,6 +101,9 @@ class GoogleAuthView(APIView):
             return Response({
                 "error": "Backend not found"
             }, status=status.HTTP_400_BAD_REQUEST)
+
+        else:
+            return JsonResponse({"error": "Invalid token"}, status=400)
 
 
 
