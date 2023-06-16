@@ -176,7 +176,7 @@ CORS_ORIGIN_WHITELIST = [
     "https://app.foodport.com.my",
 ]
 CORS_ORIGIN_REGEX_WHITELIST = [
-    r"^http://localhost:\d+$", # Allow all localhost ports 
+    r"^http://localhost:\d+$", # Allow all localhost ports
 ]
 
 USE_X_FORWARDED_HOST = True
