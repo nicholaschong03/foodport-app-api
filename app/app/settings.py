@@ -174,7 +174,9 @@ CORS_ORIGIN_ALLOW_ALL = False
 CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_WHITELIST = [
     "https://app.foodport.com.my",
-    "http://localhost:50091",
+]
+CORS_ORIGIN_REGEX_WHITELIST = [
+    r"^http://localhost:\d+$", # Allow all localhost ports 
 ]
 
 USE_X_FORWARDED_HOST = True

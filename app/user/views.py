@@ -61,47 +61,46 @@ class GoogleAuthView(APIView):
     def post(self, request):
         id_token = request.data.get("id_token")
 
-        # verify the token
+        # Verify the token
         google_response = requests.get(f'https://oauth2.googleapis.com/tokeninfo?id_token={id_token}')
 
-        #Check if the token is valid
+        # Check if the token is valid
         if google_response.status_code == 200:
             user_info = google_response.json()
 
-        strategy = load_strategy(request)
-        backend = load_backend(strategy=strategy, name='google-oauth2', redirect_uri=None)
+            strategy = load_strategy(request)
+            backend = load_backend(strategy=strategy, name='google-oauth2', redirect_uri=None)
 
-        try:
+            try:
 
-            if isinstance(backend, BaseOAuth2):
-                # If the user is not authenticated, generate the social token
-                if not request.user.is_authenticated:
-                    # Generate the social token
-                    social = backend.do_auth(access_token=id_token)
+                if isinstance(backend, BaseOAuth2):
+                    # If the user is not authenticated, generate the social token
+                    if not request.user.is_authenticated:
+                        # Generate the social token
+                        social = backend.do_auth(access_token=id_token)
+                    else:
+                        social = backend.do_auth(access_token=id_token, user=request.user)
+
+                    if social and social.user:
+                        social.user.set_unusable_password()
+                        social.user.save()
+                        token, _ = Token.objects.get_or_create(user=social.user)
+
+                        return Response({
+                            "token": token.key,
+                            "localId": social.user.id,
+                            "expiresIn": settings.EXPIRATION_TIME
+                        }, status=status.HTTP_200_OK)
+
                 else:
-                    social = backend.do_auth(access_token=id_token, user=request.user)
-
-                if social and social.user:
-                    social.user.set_unusable_password()
-                    social.user.save()
-                    token, _ = Token.objects.get_or_create(user=social.user)
-
                     return Response({
-                        "token": token.key,
-                        "localId": social.user.id,
-                        "expiresIn": settings.EXPIRATION_TIME
-                    }, status=status.HTTP_200_OK)
+                        "error": "Wrong backend type"
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
-            else:
+            except MissingBackend:
                 return Response({
-                    "error": "Wrong backend type"
+                    "error": "Backend not found"
                 }, status=status.HTTP_400_BAD_REQUEST)
-
-        except MissingBackend:
-            return Response({
-                "error": "Backend not found"
-            }, status=status.HTTP_400_BAD_REQUEST)
-
         else:
             return JsonResponse({"error": "Invalid token"}, status=400)
 
