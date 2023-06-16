@@ -28,8 +28,10 @@ from ip2geotools.databases.noncommercial import DbIpCity
 
 import os
 
-import firebase_admin
 from firebase_admin import auth
+
+from PIL import Image
+from io import BytesIO
 
 
 class CreateUserView(generics.CreateAPIView):
@@ -139,12 +141,10 @@ class FirebaseAuthView(APIView):
             except User.DoesNotExist:
                 user_email = decoded_token.get("email")
                 name = decoded_token.get("name")
-                username = decoded_token.get("username")
                 photoURL = decoded_token.get("photoURL")
-                phone_num = decoded_token.get("phoneNumber")
 
                 user = User.objects.create_user(
-                    userEmailAddress=user_email, firebase_uid=firebase_uid, userName=name, userProfilePictureUrl=photoURL, userUserName=username, userPhoneNumber=phone_num)
+                    userEmailAddress=user_email, firebase_uid=firebase_uid, userName=name, userProfilePictureUrl=photoURL)
                 user.save()
 
             token, _ = Token.objects.get_or_create(user=user)
