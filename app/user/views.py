@@ -66,11 +66,15 @@ class GoogleAuthView(APIView):
 
             if isinstance(backend, BaseOAuth2):
                 # Check if user is authenticated
+                access_token = request.data.get("access_token")
+                if not access_token:
+                    return Response({"error": "Missing access token"}, status=status.HTTP_400_BAD_REQUEST)
+
                 if not request.user.is_authenticated:
                     # Generate the social token
-                    social = backend.do_auth(access_token=request.data['access_token'])
+                    social = backend.do_auth(access_token=access_token)
                 else:
-                    social = backend.do_auth(access_token=request.data['access_token'], user=request.user)
+                    social = backend.do_auth(access_token=access_token, user=request.user)
 
                 if social and social.user:
                     social.user.set_unusable_password()
