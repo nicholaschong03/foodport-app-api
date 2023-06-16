@@ -129,13 +129,6 @@ class AuthTokenSerializer(serializers.Serializer):
         trim_whitespace=False
     )
 
-class GoogleAuthTokenSerializer(serializers.Serializer):
-    id_token = serializers.CharField()
-
-    def validate_id_token(self, value):
-        # You could add additional validation logic here, if needed
-        return value
-
     def validate(self, attrs):
         """Validate and authenticate the user."""
         userEmailAddress = attrs.get("userEmailAddress")
