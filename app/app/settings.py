@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     # "django_filter",
     "menu",
     "social_django",
+    "imagekit",
 ]
 
 MIDDLEWARE = [

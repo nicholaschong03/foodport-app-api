@@ -19,10 +19,10 @@ from django.conf import settings
 
 from rest_framework.views import APIView
 
-from social_django.utils import load_strategy, load_backend
-from social_core.exceptions import MissingBackend
-from social_core.backends.oauth import BaseOAuth2
-
+from PIL import Image
+from io import BytesIO
+from django.core.files.base import ContentFile
+import sys
 
 from ip2geotools.databases.noncommercial import DbIpCity
 
@@ -141,10 +141,11 @@ class FirebaseAuthView(APIView):
             except User.DoesNotExist:
                 user_email = decoded_token.get("email")
                 name = decoded_token.get("name")
-                photoURL = decoded_token.get("photoURL")
+                username = decoded_token.get("username")
+                profile_picture = decoded_token.get("picture")
 
                 user = User.objects.create_user(
-                    userEmailAddress=user_email, firebase_uid=firebase_uid, userName=name, userProfilePictureUrl=photoURL)
+                    userEmailAddress=user_email, firebase_uid=firebase_uid, userName=name, userUserName=username, userProfilePictureUrl=profile_picture)
                 user.save()
 
             token, _ = Token.objects.get_or_create(user=user)
@@ -196,9 +197,19 @@ class UploadProfileImageView(ManagerUserView):
     """Upload a profile image for the authenticated user"""
     serializer_class = UserProfileImageSerializer
 
+    def compress_image(self, image):
+        image_temporary = Image.open(image)
+        output_io_stream = BytesIO()
+        image_temporary.save(output_io_stream , format='JPEG', quality=60)
+        output_io_stream.seek(0)
+        image = ContentFile(output_io_stream.read(), f"{image.name.split('.')[0]}.jpeg")
+        return image
+
     def post(self, request, *args, **kwargs):
         user = self.get_object()
-        serializer = self.get_serializer(user, data=request.data)
+        data = request.data.copy()  # make a copy of the data
+        data['userProfilePictureUrl'] = self.compress_image(request.FILES['userProfilePictureUrl'])  # compress image and assign it back
+        serializer = self.get_serializer(user, data=data)
 
         if serializer.is_valid():
             if user.userProfilePictureUrl:
@@ -212,14 +223,23 @@ class UploadProfileImageView(ManagerUserView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
 class UploadCoverPictureView(ManagerUserView):
     """Upload a cover image for the authenticated user"""
     serializer_class = UserProfileCoverSerializer
 
+    def compress_image(self, image):
+        image_temporary = Image.open(image)
+        output_io_stream = BytesIO()
+        image_temporary.save(output_io_stream , format='JPEG', quality=60)
+        output_io_stream.seek(0)
+        image = ContentFile(output_io_stream.read(), f"{image.name.split('.')[0]}.jpeg")
+        return image
+
     def post(self, request, *args, **kwargs):
         user = self.get_object()
-        serializer = self.get_serializer(user, data=request.data)
+        data = request.data.copy()  # make a copy of the data
+        data['userCoverPictureUrl'] = self.compress_image(request.FILES['userCoverPictureUrl'])  # compress image and assign it back
+        serializer = self.get_serializer(user, data=data)
 
         if serializer.is_valid():
             if user.userCoverPictureUrl:
@@ -231,6 +251,8 @@ class UploadCoverPictureView(ManagerUserView):
 
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class RetrieveUserView(generics.RetrieveAPIView):

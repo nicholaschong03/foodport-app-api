@@ -11,6 +11,10 @@ from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
 
+from PIL import Image
+from io import BytesIO
+from django.core.files import File
+
 
 from core.models import Post, PostLike, User
 from post import serializers
@@ -42,6 +46,25 @@ class PostViewset(viewsets.ModelViewSet):
         postPublishIpAddress = self.request.META.get("REMOTE_ADDR")
         serializer.save(user=self.request.user,
                         postPublishIpAddress=postPublishIpAddress)
+        image = self.request.data.get("postPhotoUrl")
+        if image:
+            # open image
+            img = Image.open(image)
+
+        # resize image
+            img.thumbnail((800,600), Image.ANTIALIAS)
+
+        # save image back to image field
+            thumb_io = BytesIO()
+            img.save(thumb_io, format='JPEG', quality=50)
+
+            image_file = File(thumb_io, name=image.name)
+            serializer.save(user=self.request.user,
+                            postPublishIpAddress=postPublishIpAddress,
+                            postPhotoUrl=image_file)
+        else:
+            serializer.save(user=self.request.user,
+                            postPublishIpAddress=postPublishIpAddress)
 
     @action(methods=["POST"], detail=True, url_path="upload-image")
     def upload_image(self, request, pk=None):
