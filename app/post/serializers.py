@@ -96,6 +96,8 @@ class PostLikeSerializer(serializers.ModelSerializer):
 class PostReviewRatingSerializer(serializers.ModelSerializer):
     """Serializer for filtering Post objects by menuItemId"""
     postId = serializers.ReadOnlyField(source="id")
+    userId = serializers.ReadOnlyField(source="user.id")
+    userProfilePictureUrl = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
@@ -105,7 +107,15 @@ class PostReviewRatingSerializer(serializers.ModelSerializer):
             "postRatingEatAgain",
             "postRatingWorthIt",
             "postRatingDelicious",
+            "userId",
+            "userProfilePictureUrl",
         ]
+
+    def get_userProfilePictureUrl(self,obj):
+        if obj.user.userProfilePictureUrl and hasattr(obj.user.userProfilePictureUrl, 'url'):
+            return obj.user.userProfilePictureUrl.url
+        else:
+            return None
 
 
 class PostImageSerializer(serializers.ModelSerializer):

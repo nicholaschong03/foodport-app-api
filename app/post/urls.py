@@ -30,5 +30,8 @@ urlpatterns = [
     path("posts/<int:post_id>/liked/users/", views.PostLikedUsersListView.as_view(), name="post-liked-users-list"),
     path("posts/user/", views.SearchFilterPostsView.as_view(), name="search-filter-post"),
     path("posts/review-rating/menuItem/", views.ReturnRatingReviewPostsView.as_view(), name="review-rating-post"),
+    path("posts/review-eat-again-rating/menuItem/", views.ReturnHighestEatAgainRatingReview.as_view(), name="review-rating-eat-again"),
+    path("posts/review-worth-it-rating/menuItem/", views.ReturnHighestWorthItRatingReview.as_view(), name="review-rating-worth-it"),
+    path("posts/review-delicious-rating/menuItem/", views.ReturnHighestDeliciousRatinReview.as_view(), name="review-rating-delicious"),
 
 ]

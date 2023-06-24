@@ -199,11 +199,42 @@ class SearchFilterPostsView(generics.ListAPIView):
 
 class ReturnRatingReviewPostsView(generics.ListAPIView):
     serializer_class = serializers.PostReviewRatingSerializer
-    authentication_class = [TokenAuthentication]
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     queryset = Post.objects.all().order_by("-postRatingEatAgain", "-postRatingWorthIt", "-postRatingDelicious")
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ["menuItemId"]
     pagination_class = CustomPostPagination
+
+class ReturnHighestEatAgainRatingReview(generics.ListAPIView):
+    serializer_class = serializers.PostReviewRatingSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    queryset = Post.objects.all().order_by("-postRatingEatAgain")
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ["menuItemId"]
+    pagination_class = CustomPostPagination
+
+class ReturnHighestWorthItRatingReview(generics.ListAPIView):
+    serializer_class = serializers.PostReviewRatingSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    queryset = Post.objects.all().order_by("-postRatingWorthIt")
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ["menuItemId"]
+    pagination_class = CustomPostPagination
+
+class ReturnHighestDeliciousRatinReview(generics.ListAPIView):
+    serializer_class = serializers.PostReviewRatingSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    queryset = Post.objects.all().order_by("-postRatingDelicious")
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ["menuItemId"]
+    pagination_class = CustomPostPagination
+
 
