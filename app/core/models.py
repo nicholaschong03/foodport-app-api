@@ -187,7 +187,7 @@ class PostLike(models.Model):
         super().save(*args, **kwargs)
         post = self.post
         like_count = PostLike.objects.filter(post=post, isActive=True).count()
-        unlike_count = PostLike.objects.filter(post=post, isActive=True).count()
+        unlike_count = PostLike.objects.filter(post=post, isActive=False).count()
         post.postLikeCount = like_count - unlike_count
         post.save()
 
@@ -249,20 +249,6 @@ class MenuItem(models.Model):
     compositeIngredient = models.JSONField(default=list, blank=True, null=True)
     nutritionFacts = models.JSONField(default=dict, blank=True, null=True)
     totalPostCount = models.IntegerField(default=0)
-
-
-    # eatAgainRating = models.FloatField(
-    #     validators=[MinValueValidator(1), MaxValueValidator(5)],
-    #     blank=False, null=True,
-    #     error_messages={"blank": "Please provide a rating from 1 to 5"})
-    # deliciousRating = models.FloatField(
-    #     validators=[MinValueValidator(1), MaxValueValidator(5)],
-    #     blank=False, null=True,
-    #     error_messages={"blank": "Please provide a rating from 1 to 5"})
-    # worthItRating = models.FloatField(
-    #     validators=[MinValueValidator(1), MaxValueValidator(5)],
-    #     blank=False, null=True,
-    #     error_messages={"blank": "Please provide a rating from 1 to 5"})
 
     trendingPosition = models.IntegerField(null=True, blank=True)
     trendingDirection = models.CharField(max_length=255, null=True, blank=True)

@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
 
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
@@ -16,10 +17,12 @@ from io import BytesIO
 from django.core.files import File
 
 
-from core.models import Post, PostLike, User
+from core.models import Post, PostLike, User, Seller, MenuItem
 from post import serializers
 
-from django.db.models import Max
+from datetime import datetime
+
+from django.db.models import Max, Sum
 
 
 class PostViewset(viewsets.ModelViewSet):
@@ -236,5 +239,47 @@ class ReturnHighestDeliciousRatinReview(generics.ListAPIView):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ["menuItemId"]
     pagination_class = CustomPostPagination
+
+class LikePercentageChangeView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        sellerId = self.request.query_params.get("sellerId")
+        startDateTime = self.request.query_params.get("startDateTime")
+        endDateTime = self.request.query_params.get("endDateTime")
+
+        # Validate that the dates were provided
+        if not startDateTime or not endDateTime:
+            return Response({"error": "startDateTime and endDateTime query params are required"}, status=400)
+
+        # Parse the datetime strings into datetime objects
+        startDateTime = datetime.strptime(startDateTime, "%Y-%m-%d %H:%M:%S")
+        endDateTime = datetime.strptime(endDateTime, "%Y-%m-%d %H:%M:%S")
+
+        # Get the seller's menu items
+        menu_items = MenuItem.objects.filter(id__in=Seller.objects.get(id=sellerId).menuItemId)
+
+        # Get posts associated with seller's menu items
+        posts = Post.objects.filter(menuItemId__in=menu_items)
+
+        # Calcualte likes at startDateTime and endDateTie
+        start_likes = posts.filter(postPublishDateTime=startDateTime).aggregate(sum=Sum("postLikeCount"))["sum"] or 0
+        end_likes = posts.filter(postPublishDateTime__lte=endDateTime).aggregate(sum=Sum("postLikeCount"))["sum"] or 0
+
+        # calculate percentage change
+        if start_likes == 0:
+            if end_likes == 0:
+                percentage_change = 0
+            else:
+                percentage_change = 100
+        else:
+            percentage_change = ((end_likes - start_likes) / start_likes) * 100
+
+        # Return the result
+        return Response({"amount": end_likes,
+                         "trend": "up",
+                         "trendPercentage": percentage_change})
+
 
 
