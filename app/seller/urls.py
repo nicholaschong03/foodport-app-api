@@ -18,6 +18,8 @@ urlpatterns = [
     path("sellers/venture-day/", views.SellerListView.as_view(), name = 'seller_list'),
     path('sellers/<int:id>/', views.RetrieveSellerView.as_view(), name='retrieve_seller'),
     path("sellers/", views.AllSellersListView.as_view(), name="retrieve_all_seller"),
+    path("seller/analytic/interest/total-post-like/", views.LikePercentageChangeView.as_view(), name="analytic_total_post_like"),
+    path("seller/analytic/interest/interest-performance/", views.DailyCumulativePostLikesView.as_view(), name="analytic_interest_performance"),
 
 ]
 

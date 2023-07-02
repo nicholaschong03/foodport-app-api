@@ -1,11 +1,16 @@
 from rest_framework import viewsets, status, permissions, authentication, generics
 from rest_framework.response import Response
-from core.models import Seller
+from core.models import Seller, Post, MenuItem
 from seller.serializers import SellerSerializer, SellerDetailSerializer
 from django.utils import timezone
 from rest_framework import filters
+from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
+
+from django.db.models import Sum
+
+from datetime import datetime, timedelta
 
 from django.http import Http404
 
@@ -82,36 +87,89 @@ class AllSellersListView(generics.ListAPIView):
         return Seller.objects.all().order_by("sellerBusinessName")
 
 
+class LikePercentageChangeView(APIView):
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        sellerId = self.request.query_params.get("sellerId")
+        startDateTime = self.request.query_params.get("startDateTime")
+        endDateTime = self.request.query_params.get("endDateTime")
+
+        # Validate that the dates were provided
+        if not startDateTime or not endDateTime:
+            return Response({"error": "startDateTime and endDateTime query params are required"}, status=400)
+
+        # Parse the datetime strings into datetime objects
+        startDateTime = datetime.strptime(startDateTime, "%Y-%m-%d %H:%M:%S")
+        endDateTime = datetime.strptime(endDateTime, "%Y-%m-%d %H:%M:%S")
+
+        # Get the seller's menu items
+        menu_items = MenuItem.objects.filter(id__in=Seller.objects.get(id=sellerId).menuItemId)
+
+        # Get posts associated with seller's menu items
+        posts = Post.objects.filter(menuItemId__in=menu_items)
+
+        # Calcualte likes at startDateTime and endDateTie
+        start_likes = posts.filter(postPublishDateTime__lte=startDateTime).aggregate(sum=Sum("postLikeCount"))["sum"] or 0
+        end_likes = posts.filter(postPublishDateTime__lte=endDateTime).aggregate(sum=Sum("postLikeCount"))["sum"] or 0
+
+        # calculate trend direction and percentage change
+        if start_likes == end_likes:
+            trend = "constant"
+            percentage_change = 0
+        elif start_likes < end_likes:
+            trend = "up"
+            percentage_change = ((end_likes - start_likes) / start_likes) * 100
+        else:
+            trend = "down"
+            percentage_change = ((start_likes - end_likes) / start_likes) * 100
+
+        # Return the result
+        return Response({"amount": end_likes,
+                         "trend": trend,
+                         "trendPercentage": percentage_change})
+
+class DailyCumulativePostLikesView(APIView):
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self,request, *args, **kwargs):
+        sellerId = self.request.query_params.get("sellerId")
+        startDateTime = self.request.query_params.get("startDateTime")
+        endDateTime = self.request.query_params.get("endDateTime")
+
+        # Validate that the dates were provided
+        if not startDateTime or not endDateTime:
+            return Response({"error": "startDateTime and endDateTime query params are required"}, status=400)
+
+        # Parse the datetime strings into datetime objects
+        startDateTime = datetime.strptime(startDateTime, "%Y-%m-%d %H:%M:%S")
+        endDateTime = datetime.strptime(endDateTime, "%Y-%m-%d %H:%M:%S")
+
+        # Get the seller's menu items
+        menu_items = MenuItem.objects.filter(id__in=Seller.objects.get(id=sellerId).menuItemId)
+
+        # Get posts associated with seller's menu items
+        posts = Post.objects.filter(menuItemId__in=menu_items)
+
+        # Initialize the result list
+        results = []
+
+        # For each day in the range
+        day = startDateTime
+        while day <= endDateTime:
+            # Get the cumulative sum of likes for posts up to and including this day
+            likes = posts.filter(postPublishDateTime__lte=day).aggregate(sum=Sum("postLikeCount"))["sum"] or 0
+            # Append the result to the results list
+            results.append({"timestamp": day.isoformat(), "like": likes})
+            # Move to the next day
+            day += timedelta(days=1)
+
+        # Return the result
+        return Response({"totalPostLike": results})
 
 
-#     def create(self, request, *args, **kwargs):
-#         user = request.user
-#         serializer = self.get_serializer(data=request.data)
-#         serializer.save(user=user)
-#         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-# class SellerRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
-#     serializer_class = SellerSerializer
-#     permission_classes = [permissions.IsAuthenticated]
-#     authentication_classes = [authentication.TokenAuthentication]
-#     queryset = Seller.objects.all()
-
-#     def get_queryset(self):
-#         user = self.request.user
-#         return self.queryset.filter(user=user).order_by("id")
-
-# class SellerDeleteAPIView(generics.DestroyAPIView):
-#     serializer_class = SellerSerializer
-#     queryset = Seller.objects.all()
-#     permission_classes = [permissions.IsAuthenticated]
-#     authentication_classes = [authentication.TokenAuthentication]
-
-#     def perform_destroy(self, instance):
-#         user = self.request.user
-#         if instance.user == user:
-#            instance.delete()
-#         else:
-#             return Response({"detail": "Seller profile not found"},
-#                             status = status.HTTP_404_BAD_REQUEST)
 
 

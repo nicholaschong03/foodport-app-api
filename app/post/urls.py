@@ -33,5 +33,4 @@ urlpatterns = [
     path("posts/review-eat-again-rating/menuItem/", views.ReturnHighestEatAgainRatingReview.as_view(), name="review-rating-eat-again"),
     path("posts/review-worth-it-rating/menuItem/", views.ReturnHighestWorthItRatingReview.as_view(), name="review-rating-worth-it"),
     path("posts/review-delicious-rating/menuItem/", views.ReturnHighestDeliciousRatinReview.as_view(), name="review-rating-delicious"),
-
 ]
