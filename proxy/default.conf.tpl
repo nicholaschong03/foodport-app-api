@@ -8,7 +8,7 @@ server {
     listen 443 ssl;
     server_name api.foodport.com.my;
 
-    ssl_certificate /etc/nginx/ssl/api_foodport_com_my.crt;
+    ssl_certificate /etc/nginx/ssl/fullchain.pem;
     ssl_certificate_key /etc/nginx/ssl/api_foodport_com_my.key;
 
     location /static {
