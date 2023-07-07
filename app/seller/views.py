@@ -91,21 +91,35 @@ class LikePercentageChangeView(APIView):
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
-        sellerId = self.request.query_params.get("sellerId")
-        startDateTime = self.request.query_params.get("startDateTime")
-        endDateTime = self.request.query_params.get("endDateTime")
-
+    def get(self, request, sellerId, startDateTime, endDateTime, *args, **kwargs):
+        # sellerId = self.request.query_params.get("sellerId")
+        # startDateTime = self.request.query_params.get("startDateTime")
+        # endDateTime = self.request.query_params.get("endDateTime")
+        try:
+            seller = Seller.objects.get(id=sellerId)
+        except Seller.DoesNotExist:
+            return Response({"error": "Seller not found"}, status=400)
         # Validate that the dates were provided
         if not startDateTime or not endDateTime:
             return Response({"error": "startDateTime and endDateTime query params are required"}, status=400)
 
+        startDateTime = startDateTime.replace("_", " ").replace("%20", " ").replace("%22", " ").replace("%3A", ":").strip('"').strip()
+        endDateTime = endDateTime.replace("_", " ").replace("%20", " ").replace("%22", " ").replace("%3A", ":").strip('"').strip()
+
+        print('Start Date:', startDateTime)  # Debugging print statement
+        print('End Date:', endDateTime)  # Debugging print statement
+
         # Parse the datetime strings into datetime objects
-        startDateTime = datetime.strptime(startDateTime, "%Y-%m-%d %H:%M:%S")
-        endDateTime = datetime.strptime(endDateTime, "%Y-%m-%d %H:%M:%S")
+        try:
+            startDateTime = datetime.strptime(startDateTime, "%Y-%m-%d %H:%M:%S")
+            endDateTime = datetime.strptime(endDateTime, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            return Response({"error": "Invalid datetime format. Use 'YYYY-MM-DD HH:MM:SS'",
+                             "startDate": startDateTime,
+                             "sellerId": sellerId}, status=400,)
 
         # Get the seller's menu items
-        menu_items = MenuItem.objects.filter(id__in=Seller.objects.get(id=sellerId).menuItemId)
+        menu_items = MenuItem.objects.filter(id__in=seller.menuItemId)
 
         # Get posts associated with seller's menu items
         posts = Post.objects.filter(menuItemId__in=menu_items)
@@ -134,21 +148,35 @@ class DailyCumulativePostLikesView(APIView):
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
-    def get(self,request, *args, **kwargs):
-        sellerId = self.request.query_params.get("sellerId")
-        startDateTime = self.request.query_params.get("startDateTime")
-        endDateTime = self.request.query_params.get("endDateTime")
+    def get(self,request, sellerId,startDateTime, endDateTime, *args, **kwargs):
+        # sellerId = self.request.query_params.get("sellerId")
+        # startDateTime = self.request.query_params.get("startDateTime")
+        # endDateTime = self.request.query_params.get("endDateTime")
+
+        try:
+            seller = Seller.objects.get(id=sellerId)
+        except Seller.DoesNotExist:
+            return Response({"error": "Seller not found"}, status=400)
 
         # Validate that the dates were provided
         if not startDateTime or not endDateTime:
             return Response({"error": "startDateTime and endDateTime query params are required"}, status=400)
 
+        startDateTime = startDateTime.replace("_", " ").replace("%20", " ").replace("%22", " ").replace("%3A", ":").strip('"').strip()
+        endDateTime = endDateTime.replace("_", " ").replace("%20", " ").replace("%22", " ").replace("%3A", ":").strip('"').strip()
+
         # Parse the datetime strings into datetime objects
-        startDateTime = datetime.strptime(startDateTime, "%Y-%m-%d %H:%M:%S")
-        endDateTime = datetime.strptime(endDateTime, "%Y-%m-%d %H:%M:%S")
+        try:
+            startDateTime = datetime.strptime(startDateTime, "%Y-%m-%d %H:%M:%S")
+            endDateTime = datetime.strptime(endDateTime, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            return Response({"error": "Invalid datetime format. Use 'YYYY-MM-DD HH:MM:SS'",
+                             "startDate": startDateTime,
+                             "sellerId": sellerId}, status=400,)
+
 
         # Get the seller's menu items
-        menu_items = MenuItem.objects.filter(id__in=Seller.objects.get(id=sellerId).menuItemId)
+        menu_items = MenuItem.objects.filter(id__in=seller.menuItemId)
 
         # Get posts associated with seller's menu items
         posts = Post.objects.filter(menuItemId__in=menu_items)
