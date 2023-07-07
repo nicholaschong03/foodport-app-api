@@ -111,10 +111,10 @@ class LikePercentageChangeView(APIView):
 
         # Parse the datetime strings into datetime objects
         try:
-            startDateTime = datetime.strptime(startDateTime, "%Y-%m-%d %H:%M:%S")
-            endDateTime = datetime.strptime(endDateTime, "%Y-%m-%d %H:%M:%S")
+            startDateTime = datetime.strptime(startDateTime, "%Y-%m-%dT%H:%M:%S.%fZ")
+            endDateTime = datetime.strptime(endDateTime, "%Y-%m-%dT%H:%M:%S.%fZ")
         except ValueError:
-            return Response({"error": "Invalid datetime format. Use 'YYYY-MM-DD HH:MM:SS'",
+            return Response({"error": "Invalid datetime format. Use ISO 8601 format 'YYYY-MM-DDTHH:MM:SS.sssZ'",
                              "startDate": startDateTime,
                              "sellerId": sellerId}, status=400,)
 
@@ -167,10 +167,10 @@ class DailyCumulativePostLikesView(APIView):
 
         # Parse the datetime strings into datetime objects
         try:
-            startDateTime = datetime.strptime(startDateTime, "%Y-%m-%d %H:%M:%S")
-            endDateTime = datetime.strptime(endDateTime, "%Y-%m-%d %H:%M:%S")
+            startDateTime = datetime.strptime(startDateTime, "%Y-%m-%dT%H:%M:%S.%fZ")
+            endDateTime = datetime.strptime(endDateTime, "%Y-%m-%dT%H:%M:%S.%fZ")
         except ValueError:
-            return Response({"error": "Invalid datetime format. Use 'YYYY-MM-DD HH:MM:SS'",
+            return Response({"error": "Invalid datetime format. Use ISO 8601 format 'YYYY-MM-DDTHH:MM:SS.sssZ'",
                              "startDate": startDateTime,
                              "sellerId": sellerId}, status=400,)
 
