@@ -218,8 +218,11 @@ class DailyCumulativePostLikesView(APIView):
             # Get the cumulative sum of likes for posts up to and including this day
             likes = posts.filter(postPublishDateTime__lte=day).aggregate(
                 sum=Sum("postLikeCount"))["sum"] or 0
+            save = 10
+            share = 10
+            comment = 10
             # Append the result to the results list
-            results.append({"timestamp": day.isoformat(), "like": likes})
+            results.append({"timestamp": day.isoformat(), "like": likes, "save": save, "share": share, "comment": comment})
             # Move to the next step
             day += step
 
