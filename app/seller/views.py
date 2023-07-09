@@ -139,15 +139,23 @@ class LikePercentageChangeView(APIView):
             sum=Sum("postLikeCount"))["sum"] or 0
 
         # calculate trend direction and percentage change
-        if start_likes == end_likes:
-            trend = "constant"
-            percentage_change = 0
-        elif start_likes < end_likes:
-            trend = "up"
-            percentage_change = ((end_likes - start_likes) / start_likes) * 100
+        if start_likes == 0:
+            if end_likes == 0:
+                trend = "constant"
+                percentage_change = 0
+            else :
+                trend = "up"
+                percentage_change = 100
         else:
-            trend = "down"
-            percentage_change = ((start_likes - end_likes) / start_likes) * 100
+            if start_likes == end_likes:
+                trend = "constant"
+                percentage_change = 0
+            elif start_likes < end_likes:
+                trend = "up"
+                percentage_change = ((end_likes - start_likes) / start_likes) * 100
+            else:
+                trend = "down"
+                percentage_change = ((start_likes - end_likes) / start_likes) * 100
 
         # Return the result
         return Response({"amount": end_likes,
