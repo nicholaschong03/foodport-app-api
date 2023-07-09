@@ -14,6 +14,8 @@ from datetime import datetime, timedelta
 
 from django.http import Http404
 
+import random
+
 
 class SellerViewset(viewsets.ModelViewSet):
     """View for manage seller APIs"""
@@ -213,14 +215,14 @@ class DailyCumulativePostLikesView(APIView):
             # Default step is one day
             step = timedelta(days=1)
 
-        day = startDateTime
+        day = startDateTime + step
         while day <= endDateTime:
             # Get the cumulative sum of likes for posts up to and including this day
             likes = posts.filter(postPublishDateTime__lte=day).aggregate(
                 sum=Sum("postLikeCount"))["sum"] or 0
-            save = 10
-            share = 10
-            comment = 10
+            save = random.randint(0, 100)
+            share = random.randint(0, 100)
+            comment = random.randint(0, 100)
             # Append the result to the results list
             results.append({"timestamp": day.isoformat(), "like": likes, "save": save, "share": share, "comment": comment})
             # Move to the next step
