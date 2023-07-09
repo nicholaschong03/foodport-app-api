@@ -227,4 +227,4 @@ class DailyCumulativePostLikesView(APIView):
             day += step
 
         # Return the result
-        return Response({"totalPostLike": results})
+        return Response(results)
