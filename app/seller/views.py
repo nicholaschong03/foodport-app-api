@@ -1,6 +1,6 @@
 from rest_framework import viewsets, status, permissions, authentication, generics
 from rest_framework.response import Response
-from core.models import Seller, Post, MenuItem
+from core.models import Seller, Post, MenuItem, PostLike
 from seller.serializers import SellerSerializer, SellerDetailSerializer
 from django.utils import timezone
 from rest_framework import filters
@@ -111,9 +111,6 @@ class LikePercentageChangeView(APIView):
             "%20", " ").replace("%22", " ").replace("%3A", ":").strip('"').strip()
         endDateTime = endDateTime.replace("_", " ").replace("%20", " ").replace(
             "%22", " ").replace("%3A", ":").strip('"').strip()
-
-        print('Start Date:', startDateTime)  # Debugging print statement
-        print('End Date:', endDateTime)  # Debugging print statement
 
         # Parse the datetime strings into datetime objects
         try:
@@ -226,8 +223,8 @@ class DailyCumulativePostLikesView(APIView):
         day = startDateTime + step
         while day <= endDateTime:
             # Get the cumulative sum of likes for posts up to and including this day
-            likes = posts.filter(postPublishDateTime__lte=day).aggregate(
-                sum=Sum("postLikeCount"))["sum"] or 0
+            likes = PostLike.objects.filter(post__in = posts, likeDateTime__lte = day, isActive = True).count()
+            likes -= PostLike.objects.filter(post__in = posts, likeDateTime__lte = day, isActive = False).count()
             save = random.randint(0, 100)
             share = random.randint(0, 100)
             comment = random.randint(0, 100)

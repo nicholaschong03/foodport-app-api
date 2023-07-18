@@ -156,20 +156,14 @@ class Post(models.Model):
     postPublishIpAddress = models.GenericIPAddressField(null=True, blank=True)
     menuItemId= models.IntegerField(null=True, blank=True, default=0)
     postPhotoUrl = models.ImageField(null=True, upload_to=post_image_file_path)
-    # postPhotoThumbnail = ImageSpecField(source="postPhotoUrl",
-    #                                     processors=[ResizeToFill(800, 600)],
-    #                                     format="JPEG",
-    #                                     options={"quality": 50})
 
     postView = models.JSONField(default=dict, blank=True)
-    #postLike = models.JSONField(default=dict, blank=True)
     postComment = models.JSONField(default=dict, blank=True)
     postCommentView = models.JSONField(default=dict, blank=True)
     postSave = models.JSONField(default=dict, blank=True)
     postShare = models.JSONField(default=dict, blank=True)
     postDishSellerVisit = models.JSONField(default=dict, blank=True)
     postDishVisit = models.JSONField(default=dict, blank=True)
-    # postLike = models.ManyToManyField(User, related_name="liked_post", blank=True)
     postLikeCount = models.IntegerField(default=0)
 
     def __str__(self):
