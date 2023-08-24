@@ -10,13 +10,14 @@ from rest_framework.permissions import IsAuthenticated
 
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
+from django.utils import timezone
 
 from PIL import Image
 from io import BytesIO
 from django.core.files import File
 
 
-from core.models import Post, PostLike, User
+from core.models import Post, PostLike, User, PostSave
 from post import serializers
 
 
@@ -117,7 +118,6 @@ class LikePostView(generics.GenericAPIView):
         serializer.save()
         return Response(response_data, status=status.HTTP_200_OK)
 
-
 class PostLikedUsersListView(generics.ListAPIView):
     serializer_class = serializers.UsersListSerializer
     authentication_classes = [TokenAuthentication]
@@ -160,6 +160,44 @@ class UserlikedPostsListView(generics.ListAPIView):
         # Filter for the PostLike objects that match the maximum likeDateTime and have isActive=True.
         liked_posts_ids = [post_like["post"] for post_like in post_likes if PostLike.objects.filter(post_id=post_like["post"], likeDateTime=post_like["max_likeDateTime"], isActive=True).exists()]
         return Post.objects.filter(id__in=liked_posts_ids)
+
+
+class SavePostView(generics.GenericAPIView):
+    """This view is for users to save a post"""
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    serializer_class = serializers.PostSaveSerializer
+
+    def post(self, request, post_id):
+        user = request.user
+        post_save, created = PostSave.objects.get_or_create(user=user, post_id=post_id)
+
+        # Check if post is already saved
+        post_save.postIsSaved = not post_save.postIsSaved
+        if post_save.postIsSaved:
+            post_save.savedDateTime = timezone.now()
+            post_save.unsavedDateTime = None
+
+        else:
+            post_save.unsavedDateTime = timezone.now()
+
+        post_save.save()
+        return Response({"status": "Saved" if post_save.postIsSaved else "Unsaved"}, status=status.HTTP_200_OK)
+
+class ListSavedPostView(generics.ListAPIView):
+    """This view is for users to view the saved posts"""
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    serializer_class = serializers.PostSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        return Post.objects.filter(saves__user=user, saves__postIsSaved=True)
+
+
+
+
+
 
 
 class FollowingPostsView(generics.ListAPIView):

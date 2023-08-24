@@ -185,6 +185,17 @@ class PostLike(models.Model):
         post.postLikeCount = like_count - unlike_count
         post.save()
 
+class PostSave(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    post = models.ForeignKey(Post, related_name="saves", on_delete=models.CASCADE)
+    postIsSaved = models.BooleanField(default=False)
+    savedDateTime = models.DateTimeField(null=True, blank=True)
+    unsavedDateTime = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ("user", "post")
+
+
 class Seller(models.Model):
     """Seller object"""
     user = models.ForeignKey(

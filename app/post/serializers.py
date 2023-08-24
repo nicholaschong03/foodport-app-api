@@ -3,7 +3,7 @@ Serializers for posts APIs
 """
 from rest_framework import serializers
 
-from core.models import Post, User, PostLike
+from core.models import Post, User, PostLike, PostSave
 
 class PostSerializer(serializers.ModelSerializer):
     """Serializer for Post"""
@@ -92,6 +92,15 @@ class PostLikeSerializer(serializers.ModelSerializer):
 
     def get_postId(self, obj):
         return obj.post.id
+
+class PostSaveSerializer(serializers.ModelSerializer):
+    userId = serializers.ReadOnlyField(source="user.id")
+    postId = serializers.ReadOnlyField(source="post.id")
+
+    class Meta:
+        model = PostSave
+        fields = ["id", "userId", "postId", "postIsSaved", "savedDateTime", "unsavedDateTime"]
+        read_only_fields = ["id", "savedDateTime", "unsavedDateTime"]
 
 class PostReviewRatingSerializer(serializers.ModelSerializer):
     """Serializer for filtering Post objects by menuItemId"""
