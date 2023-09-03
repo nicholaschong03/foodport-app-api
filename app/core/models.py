@@ -196,6 +196,24 @@ class PostSave(models.Model):
         unique_together = ("user", "post")
 
 
+class PostView(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="post_views")
+    viewDateTime = models.DateTimeField(auto_now_add=True)
+    viewUserAgent = models.TextField(null=True, blank=True)
+
+
+class PostComment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="comments")
+    comment = models.TextField()
+    commentDateTime = models.DateTimeField(auto_now_add=True)
+    commentIpAddress = models.GenericIPAddressField(null=True, blank=True)
+    commentUserAgent = models.TextField(null=True, blank=True)
+
+
+
+
 class Seller(models.Model):
     """Seller object"""
     user = models.ForeignKey(

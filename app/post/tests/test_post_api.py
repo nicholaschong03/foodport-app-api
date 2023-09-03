@@ -13,7 +13,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from core.models import Post,PostLike, PostSave
+from core.models import Post,PostLike, PostSave, PostView, PostComment
 
 from post.serializers import PostSerializer, PostDetailSerializer
 
@@ -272,6 +272,114 @@ class PrivatePostApiTests(TestCase):
         post_ids_in_response = [post["postId"] for post in res.data]
         self.assertIn(post1.id, post_ids_in_response)
         self.assertIn(post2.id, post_ids_in_response)
+
+    def test_view_post(self):
+        """Test tracking a user has viewed a post"""
+        new_user = create_user(userEmailAddress = "user2@example.com",
+                               password = "test123",
+                               userPhoneNumber = "012345678",
+                               userUsername = "username2")
+        post = create_post(user=new_user)
+        url = reverse("post:view-post", kwargs={"post_id": post.id})
+        res = self.client.post(url)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+    def test_retrieve_post_view_list(self):
+        """Test retrieving a list of postView for a user"""
+        new_user = create_user(userEmailAddress = "user2@example.com",
+                               password = "test123",
+                               userPhoneNumber = "012345678",
+                               userUsername = "username2")
+
+        new_user1 = create_user(userEmailAddress = "user3@example.com",
+                               password = "test1234",
+                               userPhoneNumber = "0123456733",
+                               userUsername = "username3")
+        post = create_post(user=new_user)
+        PostView.objects.create(user=new_user1, post=post)
+        PostView.objects.create(user=self.user, post=post)
+        url = reverse("post:postview-list", kwargs={"post_id": post.id})
+        res = self.client.get(url)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data),  2)
+        self.assertIn(res.data[0]["userId"], [new_user1.id, self.user.id])
+        self.assertIn(res.data[1]["userId"], [new_user1.id, self.user.id])
+
+
+    def test_create_comment_post(self):
+        """Test creating a comment on a post"""
+        new_user = create_user(userEmailAddress = "user2@example.com",
+                                password = "test123",
+                                userPhoneNumber = "0123456789",
+                                userUsername = "username2")
+        post = create_post(user=new_user)
+        url = reverse("post:comment-post", kwargs={"post_id": post.id})
+        payload = {
+            "comment": "This is a test comment"
+        }
+        res = self.client.post(url, payload)
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+
+    def test_retrieve_post_comment_list(self):
+        """Test retrieving a list of comments of a post"""
+        new_user = create_user(userEmailAddress = "user1@example.com",
+                               password = "test123",
+                               userPhoneNumber = "012345689",
+                               userUsername = "username3")
+        new_user2 = create_user(userEmailAddress = "user2@example.com",
+                               password = "test12344",
+                               userPhoneNumber = "0123456829",
+                               userUsername = "username2")
+        post = create_post(user=new_user)
+        PostComment.objects.create(user=new_user2, post=post)
+        PostComment.objects.create(user=self.user, post=post)
+        url = reverse("post:postcomment-list", kwargs={"post_id": post.id})
+        res = self.client.get(url)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data), 2)
+        self.assertIn(res.data[0]["userId"], [new_user2.id, self.user.id])
+        self.assertIn(res.data[1]["userId"], [new_user2.id, self.user.id])
+
+
+    def test_delete_postcomment(self):
+        new_user = create_user(userEmailAddress = "user1@example.com",
+                               password = "test123",
+                               userPhoneNumber = "012345689",
+                               userUsername = "username3")
+        post = create_post(user=new_user)
+        comment = PostComment.objects.create(user=self.user, post=post)
+        url = reverse("post:postcomment-delete", kwargs={"pk": comment.id})
+        res = self.client.delete(url)
+
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        exists = PostComment.objects.filter(id=comment.id).exists()
+        self.assertFalse(exists)
+
+    def test_delete_comment_not_owner(self):
+        new_user = create_user(userEmailAddress = "user1@example.com",
+                               password = "test123",
+                               userPhoneNumber = "012345689",
+                               userUsername = "username3")
+        new_user2 = create_user(userEmailAddress = "user2@example.com",
+                               password = "test12344",
+                               userPhoneNumber = "0123456829",
+                               userUsername = "username2")
+        post = create_post(user=new_user)
+        comment = PostComment.objects.create(user=new_user2, post=post)
+        url = reverse("post:postcomment-delete", kwargs={"pk": comment.id})
+        res = self.client.delete(url)
+
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+        exists = PostComment.objects.filter(id=comment.id).exists()
+        self.assertTrue(exists)
+
+
+
+
+
 
 
 

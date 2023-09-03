@@ -17,11 +17,11 @@ from io import BytesIO
 from django.core.files import File
 
 
-from core.models import Post, PostLike, User, PostSave
+from core.models import Post, PostLike, User, PostSave, PostView, PostComment
 from post import serializers
 
 
-from django.db.models import Max
+from django.db.models import Max, Case, When, BooleanField
 
 
 class PostViewset(viewsets.ModelViewSet):
@@ -54,7 +54,7 @@ class PostViewset(viewsets.ModelViewSet):
             img = Image.open(image)
 
         # resize image
-            img.thumbnail((800,600), Image.ANTIALIAS)
+            img.thumbnail((800, 600), Image.ANTIALIAS)
 
         # save image back to image field
             thumb_io = BytesIO()
@@ -80,10 +80,12 @@ class PostViewset(viewsets.ModelViewSet):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class CustomPostPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = "page_size"
     max_page_size = 100
+
 
 class LikePostView(generics.GenericAPIView):
     """this view is for users to like a post"""
@@ -117,6 +119,7 @@ class LikePostView(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(response_data, status=status.HTTP_200_OK)
+
 
 class PostLikedUsersListView(generics.ListAPIView):
     serializer_class = serializers.UsersListSerializer
@@ -156,9 +159,11 @@ class UserlikedPostsListView(generics.ListAPIView):
         """
         user_id = self.request.user.id
         # Annotate PostLike objects with the maximum likeDateTime for each post.
-        post_likes = PostLike.objects.filter(user_id=user_id).values("post").annotate(max_likeDateTime=Max("likeDateTime"))
+        post_likes = PostLike.objects.filter(user_id=user_id).values(
+            "post").annotate(max_likeDateTime=Max("likeDateTime"))
         # Filter for the PostLike objects that match the maximum likeDateTime and have isActive=True.
-        liked_posts_ids = [post_like["post"] for post_like in post_likes if PostLike.objects.filter(post_id=post_like["post"], likeDateTime=post_like["max_likeDateTime"], isActive=True).exists()]
+        liked_posts_ids = [post_like["post"] for post_like in post_likes if PostLike.objects.filter(
+            post_id=post_like["post"], likeDateTime=post_like["max_likeDateTime"], isActive=True).exists()]
         return Post.objects.filter(id__in=liked_posts_ids)
 
 
@@ -170,7 +175,8 @@ class SavePostView(generics.GenericAPIView):
 
     def post(self, request, post_id):
         user = request.user
-        post_save, created = PostSave.objects.get_or_create(user=user, post_id=post_id)
+        post_save, created = PostSave.objects.get_or_create(
+            user=user, post_id=post_id)
 
         # Check if post is already saved
         post_save.postIsSaved = not post_save.postIsSaved
@@ -184,6 +190,7 @@ class SavePostView(generics.GenericAPIView):
         post_save.save()
         return Response({"status": "Saved" if post_save.postIsSaved else "Unsaved"}, status=status.HTTP_200_OK)
 
+
 class ListSavedPostView(generics.ListAPIView):
     """This view is for users to view the saved posts"""
     authentication_classes = [TokenAuthentication]
@@ -195,9 +202,84 @@ class ListSavedPostView(generics.ListAPIView):
         return Post.objects.filter(saves__user=user, saves__postIsSaved=True)
 
 
+class ViewPostView(generics.GenericAPIView):
+    """This view is to create a postView instance"""
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    serializer_class = serializers.PostViewSerializer
+
+    def post(self, request, *args, **kwargs):
+        post_id = kwargs.get("post_id")
+        try:
+            post = Post.objects.get(pk=post_id)
+        except Post.DoesNotExist:
+            return Response({"detail": "Post not found"})
+        user = request.user
+        data = {
+            "user": user.id,
+            "post": post.id,
+            "viewUserAgent": request.META.get("HTTP_USER_AGENT"),
+        }
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"status": "Viewed"}, status=status.HTTP_200_OK)
 
 
+class PostViewListView(generics.ListAPIView):
+    serializer_class = serializers.PostViewSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        """This view will return a list of all the postViews"""
+        post_id = self.kwargs["post_id"]
+        return PostView.objects.filter(post_id=post_id)
+
+
+class CretePostCommentView(generics.CreateAPIView):
+    authentication_classes = [TokenAuthentication]
+    serializer_class = serializers.PostCommentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        post_id = self.kwargs.get("post_id")
+        try:
+            post = Post.objects.get(pk=post_id)
+        except Post.DoesNotExist:
+            return Response({"detail": "Post not found"})
+        serializer.save(
+            user=self.request.user,
+            post=post,
+            commentIpAddress=self.request.META.get("REMOTE_ADDR"),
+            commentUserAgent=self.request.META.get("HTTP_USER_AGENT")
+
+        )
+        # return Response({"status":"commented"}, status=status.HTTP_200_OK)
+
+class ListPostCommentView(generics.ListAPIView):
+    """This view is for users to view the comments of a post"""
+    serializer_class = serializers.PostCommentSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        post_id = self.kwargs.get("post_id")
+        return PostComment.objects.filter(post_id = post_id).order_by("-commentDateTime")
+
+class DeleteCommentView(generics.DestroyAPIView):
+    """This view is for users to delete their comment"""
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    serializer_class = serializers.PostCommentSerializer
+    queryset = PostComment.objects.all()
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.user != request.user:
+            return Response({"detail": "Not authorized to delete this comment."}, status=status.HTTP_403_FORBIDDEN)
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class FollowingPostsView(generics.ListAPIView):
@@ -226,25 +308,45 @@ class SinglePostView(generics.RetrieveAPIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
+
 class SearchFilterPostsView(generics.ListAPIView):
     serializer_class = serializers.PostSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
-    queryset= Post.objects.all().order_by("-postLikeCount")
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ["menuItemId", "user"]
     pagination_class = CustomPostPagination
+
+    def get_queryset(self):
+        user = self.request.user
+
+        # Annotate each post with an is_viewed field
+        queryset = Post.objects.annotate(
+            is_viewed=Case(
+                When(post_views__user=user, then=True),
+                default=False,
+                output_field=BooleanField()
+            )
+        )
+
+        # Order by unseen post first, and then post
+        queryset = queryset.order_by("is_viewed", "-postPublishDateTime")
+
+        return queryset
+
 
 class ReturnRatingReviewPostsView(generics.ListAPIView):
     serializer_class = serializers.PostReviewRatingSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
-    queryset = Post.objects.all().order_by("-postRatingEatAgain", "-postRatingWorthIt", "-postRatingDelicious")
+    queryset = Post.objects.all().order_by("-postRatingEatAgain",
+                                           "-postRatingWorthIt", "-postRatingDelicious")
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ["menuItemId"]
     pagination_class = CustomPostPagination
+
 
 class ReturnHighestEatAgainRatingReview(generics.ListAPIView):
     serializer_class = serializers.PostReviewRatingSerializer
@@ -256,6 +358,7 @@ class ReturnHighestEatAgainRatingReview(generics.ListAPIView):
     filterset_fields = ["menuItemId"]
     pagination_class = CustomPostPagination
 
+
 class ReturnHighestWorthItRatingReview(generics.ListAPIView):
     serializer_class = serializers.PostReviewRatingSerializer
     authentication_classes = [TokenAuthentication]
@@ -266,6 +369,7 @@ class ReturnHighestWorthItRatingReview(generics.ListAPIView):
     filterset_fields = ["menuItemId"]
     pagination_class = CustomPostPagination
 
+
 class ReturnHighestDeliciousRatinReview(generics.ListAPIView):
     serializer_class = serializers.PostReviewRatingSerializer
     authentication_classes = [TokenAuthentication]
@@ -275,7 +379,3 @@ class ReturnHighestDeliciousRatinReview(generics.ListAPIView):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ["menuItemId"]
     pagination_class = CustomPostPagination
-
-
-
-

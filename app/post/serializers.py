@@ -3,7 +3,7 @@ Serializers for posts APIs
 """
 from rest_framework import serializers
 
-from core.models import Post, User, PostLike, PostSave
+from core.models import Post, User, PostLike, PostSave, PostView, PostComment
 
 class PostSerializer(serializers.ModelSerializer):
     """Serializer for Post"""
@@ -68,8 +68,6 @@ class PostDetailSerializer(PostSerializer):
         fields = PostSerializer.Meta.fields
 
 class PostLikeSerializer(serializers.ModelSerializer):
-    # user = serializers.PrimaryKeyRelatedField(read_only=True, default=serializers.CurrentUserDefault())
-    # post = serializers.PrimaryKeyRelatedField(queryset=Post.objects.all())
     userId = serializers.SerializerMethodField(read_only=True)
     postId = serializers.SerializerMethodField(read_only=True)
 
@@ -101,6 +99,47 @@ class PostSaveSerializer(serializers.ModelSerializer):
         model = PostSave
         fields = ["id", "userId", "postId", "postIsSaved", "savedDateTime", "unsavedDateTime"]
         read_only_fields = ["id", "savedDateTime", "unsavedDateTime"]
+
+class PostViewSerializer(serializers.ModelSerializer):
+    userId = serializers.SerializerMethodField(read_only=True)
+    postId = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = PostView
+        fields = [
+            "id",
+            "postId",
+            "userId",
+            "post",
+            "user",
+            "viewDateTime",
+            "viewUserAgent"
+        ]
+
+    def get_userId(self, obj):
+        return obj.user.id
+
+    def get_postId(self, obj):
+        return obj.post.id
+
+
+class PostCommentSerializer(serializers.ModelSerializer):
+    userId = serializers.ReadOnlyField(source="user.id")
+    postId = serializers.ReadOnlyField(source="post.id")
+
+    class Meta:
+        model = PostComment
+        fields = [
+            "id",
+            "postId",
+            "userId",
+            "comment",
+            "commentDateTime",
+            "commentIpAddress",
+            "commentUserAgent"
+        ]
+
+
 
 class PostReviewRatingSerializer(serializers.ModelSerializer):
     """Serializer for filtering Post objects by menuItemId"""
