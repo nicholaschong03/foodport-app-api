@@ -3,7 +3,7 @@ Serializers for posts APIs
 """
 from rest_framework import serializers
 
-from core.models import Post, User, PostLike, PostSave, PostView, PostComment
+from core.models import Post, User, PostLike, PostSave, PostView, PostComment, Seller
 
 class PostSerializer(serializers.ModelSerializer):
     """Serializer for Post"""
@@ -13,6 +13,12 @@ class PostSerializer(serializers.ModelSerializer):
     postPublishIpAddress = serializers.SerializerMethodField()
     postLikeCount = serializers.SerializerMethodField()
     isLiked = serializers.SerializerMethodField()
+    userProfilePictureUrl = serializers.SerializerMethodField()
+    sellerOperatingLocation = serializers.SerializerMethodField()
+    userUsername = serializers.ReadOnlyField(source="user.userUsername")
+
+
+
 
     class Meta:
         model = Post
@@ -37,6 +43,10 @@ class PostSerializer(serializers.ModelSerializer):
             "postView",
             "postShare",
             "isLiked",
+            "userProfilePictureUrl",
+            "sellerOperatingLocation",
+            "userUsername",
+
         ]
         read_only_fields = ["id", "userId", "postPublishDateTime", "isLiked"]
 
@@ -59,6 +69,25 @@ class PostSerializer(serializers.ModelSerializer):
         like_count = PostLike.objects.filter(post=obj, isActive=True).count()
         unlike_count = PostLike.objects.filter(post=obj, isActive=False).count()
         return like_count - unlike_count
+
+    def get_userProfilePictureUrl(self, obj):
+        user = obj.user
+        if user and user.userProfilePictureUrl:
+            request = self.context.get("request")
+            photo_url = user.userProfilePictureUrl.url
+            return request.build_absolute_uri(photo_url)
+        return None
+
+
+    def get_sellerOperatingLocation(self, obj):
+        menu_id = obj.menuItemId
+        seller_instance = Seller.objects.filter(menuItemId=menu_id)
+
+        if seller_instance:
+            return seller_instance.sellerOperatingLocation
+        return None
+
+
 
 
 class PostDetailSerializer(PostSerializer):

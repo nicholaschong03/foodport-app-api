@@ -212,6 +212,13 @@ class PostComment(models.Model):
     commentUserAgent = models.TextField(null=True, blank=True)
 
 
+# class PostShare(models.Model):
+#     post = models.ForeignKey("Post", on_delete=models.CASCADE)
+#     sharedBy = models.ForeignKey(User, on_delete=models.CASCADE)
+#     sharedTo = models.ForeignKey(User, on_delete=models.CASCADE)
+#     sharedDateTime = models.DateTimeField(auto_now_add=True)
+
+
 
 
 class Seller(models.Model):
