@@ -3,7 +3,7 @@ Serializers for posts APIs
 """
 from rest_framework import serializers
 
-from core.models import Post, User, PostLike, PostSave, PostView, PostComment, Seller
+from core.models import Post, User, PostLike, PostSave, PostView, PostComment, Seller, PostShare
 
 class PostSerializer(serializers.ModelSerializer):
     """Serializer for Post"""
@@ -167,6 +167,34 @@ class PostCommentSerializer(serializers.ModelSerializer):
             "commentIpAddress",
             "commentUserAgent"
         ]
+
+class PostShareSerializer(serializers.ModelSerializer):
+    sharedById = serializers.SerializerMethodField(read_only=True)
+    sharedToId = serializers.SerializerMethodField(read_only=True)
+    postId = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = PostShare
+        fields = [
+            "id",
+            "postId",
+            "sharedById",
+            "sharedToId",
+            "sharedDateTime",
+            "sharedBy",
+            "sharedTo",
+            "post"
+
+        ]
+
+    def get_sharedById(self, obj):
+        return obj.sharedBy.id
+
+    def get_sharedToId(self, obj):
+        return obj.sharedTo.id
+    
+    def get_postId(self, obj):
+        return obj.post.id
 
 
 

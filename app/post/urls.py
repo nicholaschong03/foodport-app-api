@@ -21,6 +21,7 @@ urlpatterns = [
     path("like/post/<int:post_id>/", views.LikePostView.as_view(), name="like-post"),
     path("view/post/<int:post_id>/", views.ViewPostView.as_view(), name = "view-post"),
     path("save/post/<int:post_id>/", views.SavePostView.as_view(), name="save-post"),
+    path("share/post/<int:post_id>/<int:user_id>/", views.SharePostView.as_view(), name="share-post"),
     path("comment/post/<int:post_id>/", views.CretePostCommentView.as_view(), name="comment-post"),
     path("posts/following/", views.FollowingPostsView.as_view(), name="following-post"),
     path("posts/for-you/", views.AllPostsView.as_view(), name =  "for-you-post"),
@@ -39,5 +40,6 @@ urlpatterns = [
     path("posts/review-eat-again-rating/menuItem/", views.ReturnHighestEatAgainRatingReview.as_view(), name="review-rating-eat-again"),
     path("posts/review-worth-it-rating/menuItem/", views.ReturnHighestWorthItRatingReview.as_view(), name="review-rating-worth-it"),
     path("posts/review-delicious-rating/menuItem/", views.ReturnHighestDeliciousRatinReview.as_view(), name="review-rating-delicious"),
+
 ]
 

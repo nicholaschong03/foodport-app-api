@@ -16,12 +16,18 @@ from PIL import Image
 from io import BytesIO
 from django.core.files import File
 
-
-from core.models import Post, PostLike, User, PostSave, PostView, PostComment
+from core.models import Post, PostLike, User, PostSave, PostView, PostComment, PostShare
 from post import serializers
 
-
 from django.db.models import Max, Case, When, BooleanField
+
+
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+from django.shortcuts import get_object_or_404
+from django.http import HttpResponse
+
+channel_layer = get_channel_layer()
 
 
 class PostViewset(viewsets.ModelViewSet):
@@ -257,6 +263,7 @@ class CretePostCommentView(generics.CreateAPIView):
         )
         # return Response({"status":"commented"}, status=status.HTTP_200_OK)
 
+
 class ListPostCommentView(generics.ListAPIView):
     """This view is for users to view the comments of a post"""
     serializer_class = serializers.PostCommentSerializer
@@ -265,7 +272,8 @@ class ListPostCommentView(generics.ListAPIView):
 
     def get_queryset(self):
         post_id = self.kwargs.get("post_id")
-        return PostComment.objects.filter(post_id = post_id).order_by("-commentDateTime")
+        return PostComment.objects.filter(post_id=post_id).order_by("-commentDateTime")
+
 
 class DeleteCommentView(generics.DestroyAPIView):
     """This view is for users to delete their comment"""
@@ -379,3 +387,83 @@ class ReturnHighestDeliciousRatinReview(generics.ListAPIView):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ["menuItemId"]
     pagination_class = CustomPostPagination
+
+
+# def share_post_view(request, post_id, user_id):
+#     # Retrieve the post and users from the database
+#     try:
+#         post = Post.objects.get(pk=post_id)
+#     except Post.DoesNotExist:
+#         return Response({"detail": "Post not found"}, status=404)
+
+#     try:
+#         shared_to = User.objects.get(pk=user_id)
+#     except User.DoesNotExist:
+#         return Response({"detail": "User not found"}, status=404)
+
+#     shared_by = request.user
+
+#     # Create the PostShare instance
+#     serializer = serializers.PostShareSerializer(data={
+#         "post": post.id,
+#         "sharedBy": shared_by.id,
+#         "sharedTo": shared_to.id
+#     })
+
+#     serializer.is_valid(raise_exception=True)
+#     serializer.save()
+
+
+#     # Send a WebSocket message to the shared_to user
+#     async_to_sync(channel_layer.group_send)(
+#         f"user_{shared_to.id}",
+#         {
+#             "type": "share.post",
+#             "post_id": post.id,
+#             "shared_by_username": shared_by.username,
+#         }
+#     )
+#     return HttpResponse("Post shared successfully")
+
+class SharePostView(generics.GenericAPIView):
+    """This view is for user share the post"""
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    serializer_class = serializers.PostShareSerializer
+
+
+    def post(self, request, *args, **kwargs):
+        post_id = kwargs.get("post_id")
+
+        try:
+            post = Post.objects.get(pk=post_id)
+        except Post.DoesNotExist:
+            return Response({"detail": "Post not found"})
+
+        user_id = kwargs.get("user_id")
+
+        try:
+            shared_to = User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return Response({"detail": "Post not found"})
+
+        shared_by = request.user
+        data = {
+            "sharedBy": shared_by.id,
+            "sharedTo": shared_to.id,
+            "post" : post.id
+        }
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        # Send a WebSocket message to the shared_to user
+        async_to_sync(channel_layer.group_send)(
+            f"user_{shared_to.id}",
+            {
+                "type": "share.post",
+                "post_id": post.id,
+                "shared_by_username": shared_by.userName,
+            }
+        )
+        return HttpResponse("Post shared successfully")

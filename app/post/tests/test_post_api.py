@@ -13,7 +13,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from core.models import Post,PostLike, PostSave, PostView, PostComment
+from core.models import Post,PostLike, PostSave, PostView, PostComment, PostShare
 
 from post.serializers import PostSerializer, PostDetailSerializer
 
@@ -375,6 +375,29 @@ class PrivatePostApiTests(TestCase):
 
         exists = PostComment.objects.filter(id=comment.id).exists()
         self.assertTrue(exists)
+
+
+    def test_create_share_post(self):
+        """Test sharing a post"""
+        new_user = create_user(userEmailAddress = "user2@example.com",
+                               password = "test123",
+                               userPhoneNumber = "0123456789",
+                               userUsername = "username2")
+        post = create_post(user=self.user)
+        url = reverse("post:share-post", kwargs={"post_id":post.id,
+                                                 "user_id":new_user.id})
+        res = self.client.post(url)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+        self.assertTrue(
+            PostShare.objects.filter(
+                post = post,
+                sharedBy = self.user,
+                sharedTo = new_user
+            ).exists()
+        )
+
 
 
 
