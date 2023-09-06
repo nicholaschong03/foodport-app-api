@@ -325,6 +325,8 @@ class SearchFilterPostsView(generics.ListAPIView):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ["menuItemId", "user"]
     pagination_class = CustomPostPagination
+    queryset = Post.objects.all().order_by("postPublishDateTime")
+
 
     def get_queryset(self):
         user = self.request.user
