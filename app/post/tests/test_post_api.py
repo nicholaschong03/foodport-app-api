@@ -423,7 +423,7 @@ class PrivatePostApiTests(TestCase):
 
         posts = res.data["results"]
 
-        user_location = (new_user.userLatitude, new_user.userLongitude)
+        user_location = (self.user.userLatitude, self.user.userLongitude)
         business1_location = (business.businessOperatingLatitude, business.businessOperatingLongitude)
         business2_location = (business2.businessOperatingLatitude, business2.businessOperatingLongitude)
 
