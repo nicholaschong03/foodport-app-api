@@ -26,6 +26,8 @@ class BusinessSerializer(serializers.ModelSerializer):
                   "lowest_price",
                   "highest_price",
                   "businessOperatingLocation",
+                  "businessOperatingLatitude",
+                  "businessOperatingLongitude"
 
                   ]
 

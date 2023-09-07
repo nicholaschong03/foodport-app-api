@@ -10,16 +10,20 @@ from rest_framework.permissions import IsAuthenticated
 
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
+from geopy.distance import geodesic
+
 from django.utils import timezone
 
 from PIL import Image
 from io import BytesIO
 from django.core.files import File
 
-from core.models import Post, PostLike, User, PostSave, PostView, PostComment, PostShare
+from core.models import Post, PostLike, User, PostSave, PostView, PostComment, PostShare, Business
 from post import serializers
 
-from django.db.models import Max, Case, When, BooleanField
+from django.db import models
+from django.db.models import Max, Case, When, BooleanField, F, Value
+from django.forms.models import model_to_dict
 
 
 from channels.layers import get_channel_layer
@@ -327,7 +331,6 @@ class SearchFilterPostsView(generics.ListAPIView):
     pagination_class = CustomPostPagination
     queryset = Post.objects.all().order_by("postPublishDateTime")
 
-
     def get_queryset(self):
         user = self.request.user
 
@@ -344,6 +347,55 @@ class SearchFilterPostsView(generics.ListAPIView):
         queryset = queryset.order_by("is_viewed", "-postPublishDateTime")
 
         return queryset
+
+
+class NearbyPostsListView(generics.ListAPIView):
+    serializer_class = serializers.PostDistanceSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classess = [IsAuthenticated]
+
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ["menuItemId", "user"]
+    pagination_class = CustomPostPagination
+
+    def get_queryset(self):
+        user = self.request.user
+
+        # Get location
+        user_location = (user.userLatitude, user.userLongitude)
+
+        # Get all post
+        posts = Post.objects.all()
+
+        # Calculate the distance and add as an attribute to each post
+        for post in posts:
+            try:
+                business = Business.objects.get(menuItemId=post.menuItemId)
+                business_location = (
+                    business.businessOperatingLatitude, business.businessOperatingLongitude)
+                post.distance = geodesic(
+                    user_location, business_location).kilometers
+
+                print(f"User Location: {user_location}, Business Location: {business_location}, Calculated Distance: {post.distance}")
+
+            except Business.DoesNotExist:
+                # If business does not exist, set a high distance value
+                post.distance = 99999
+
+        sorted_posts_list = sorted(posts, key=lambda x: x.distance)
+
+        # Convert the list of post objects back to a queryset
+        sorted_posts_ids = [post.id for post in sorted_posts_list]
+        sorted_posts = Post.objects.filter(id__in=sorted_posts_ids)
+        sorted_posts = sorted_posts.annotate(
+            distance=Case(
+                *[When(id=post.id, then=Value(post.distance))
+                  for post in sorted_posts_list],
+                output_field=models.FloatField()
+            )
+        ).order_by("distance")
+
+        return sorted_posts
 
 
 class ReturnRatingReviewPostsView(generics.ListAPIView):
@@ -433,7 +485,6 @@ class SharePostView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = serializers.PostShareSerializer
 
-
     def post(self, request, *args, **kwargs):
         post_id = kwargs.get("post_id")
 
@@ -453,7 +504,7 @@ class SharePostView(generics.GenericAPIView):
         data = {
             "sharedBy": shared_by.id,
             "sharedTo": shared_to.id,
-            "post" : post.id
+            "post": post.id
         }
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)

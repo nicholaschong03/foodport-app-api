@@ -26,6 +26,7 @@ urlpatterns = [
     path("posts/following/", views.FollowingPostsView.as_view(), name="following-post"),
     path("posts/for-you/", views.AllPostsView.as_view(), name =  "for-you-post"),
     path("posts/feed/for-you/", views.SearchFilterPostsView.as_view(), name= "for-you-post-feed"),
+    path("posts/feed/nearby/", views.NearbyPostsListView.as_view(), name = "nearby-post-feed"),
     path("posts/", views.SearchFilterPostsView.as_view(), name= "posts-search-filter"),
     path("post/<int:pk>/", views.SinglePostView.as_view(), name="single-post"),
     path("postlike/<int:post_id>/", views.PostLikeListView.as_view(), name="postlike-list"),

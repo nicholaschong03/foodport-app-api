@@ -64,6 +64,8 @@ class UserSerializer(serializers.ModelSerializer):
                   "userPostCommentView",
                   "userPostDishVisit",
                   "userPostDishSellerVisit",
+                  "userLatitude",
+                  "userLongitude"
                     ]
         extra_kwargs = {"password": {"write_only": True, "min_length": 5},
                         "userUsername": {"required": False}}

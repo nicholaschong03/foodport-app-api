@@ -128,6 +128,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     userCoverPictureUrl = models.ImageField(
         null=True, upload_to=user_cover_picture_file_path)
     IPv4 = models.JSONField(default=dict, null=True, blank=True)
+    userLatitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    userLongitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
 
     def get_friends(self):
         """Return a QuerySet of friends of the user"""
@@ -268,6 +270,8 @@ class Business(models.Model):
     businessOwnerId = models.IntegerField(null=True, blank=True)
     businessInfoContributor = models.JSONField(null=True, blank=True)
     menuItemId = models.JSONField(blank=True, null=True, default=list)
+    businessOperatingLatitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    businessOperatingLongitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
 
     def __str__(self):
         return self.businessName

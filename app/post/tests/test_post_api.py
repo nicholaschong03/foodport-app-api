@@ -10,10 +10,12 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
+from geopy.distance import geodesic
+
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from core.models import Post,PostLike, PostSave, PostView, PostComment, PostShare
+from core.models import Post,PostLike, PostSave, PostView, PostComment, PostShare, Business
 
 from post.serializers import PostSerializer, PostDetailSerializer
 
@@ -398,6 +400,43 @@ class PrivatePostApiTests(TestCase):
             ).exists()
         )
 
+
+    def test_nearby_posts_list_view(self):
+        """Test calculating the post"""
+        new_user = create_user(userEmailAddress = "user2@example.com",
+                               password = "test123",
+                               userPhoneNumber = "0123456789",
+                               userUsername = "username2",
+                               userLatitude=40.7128,
+                               userLongitude=-74.0060 )
+        create_post(user=new_user, menuItemId=1)
+        create_post(user=new_user, menuItemId=2)
+
+        business = Business.objects.create(user=new_user, menuItemId=1, businessOperatingLatitude=40.730610, businessOperatingLongitude=-73.935242)
+        business2 = Business.objects.create(user=new_user, menuItemId=2, businessOperatingLatitude=40.659104, businessOperatingLongitude=-73.960484)
+
+        url = reverse("post:nearby-post-feed")
+
+        res = self.client.get(url)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+        posts = res.data["results"]
+
+        user_location = (new_user.userLatitude, new_user.userLongitude)
+        business1_location = (business.businessOperatingLatitude, business.businessOperatingLongitude)
+        business2_location = (business2.businessOperatingLatitude, business2.businessOperatingLongitude)
+
+        distance_to_business1 = geodesic(user_location, business1_location).kilometers
+        distance_to_business2 = geodesic(user_location, business2_location).kilometers
+
+        print(f"Calculated distances: {distance_to_business1}, {distance_to_business2}")
+        print(f"Response distances: {posts[0]['distance']}, {posts[1]['distance']}")
+
+        self.assertEqual(posts[0]['distance'], distance_to_business1)
+        self.assertEqual(posts[1]['distance'], distance_to_business2)
+
+        self.assertLess(posts[0]['distance'], posts[1]['distance'])
 
 
 

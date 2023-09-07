@@ -13,4 +13,5 @@ firebase-admin
 django-imagekit
 channels
 daphne
+geopy
 

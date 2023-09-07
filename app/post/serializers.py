@@ -5,6 +5,7 @@ from rest_framework import serializers
 
 from core.models import Post, User, PostLike, PostSave, PostView, PostComment, Seller, PostShare
 
+
 class PostSerializer(serializers.ModelSerializer):
     """Serializer for Post"""
     postPublishDateTime = serializers.SerializerMethodField()
@@ -16,9 +17,6 @@ class PostSerializer(serializers.ModelSerializer):
     userProfilePictureUrl = serializers.SerializerMethodField()
     sellerOperatingLocation = serializers.SerializerMethodField()
     userUsername = serializers.ReadOnlyField(source="user.userUsername")
-
-
-
 
     class Meta:
         model = Post
@@ -47,6 +45,7 @@ class PostSerializer(serializers.ModelSerializer):
             "sellerOperatingLocation",
             "userUsername",
 
+
         ]
         read_only_fields = ["id", "userId", "postPublishDateTime", "isLiked"]
 
@@ -60,14 +59,16 @@ class PostSerializer(serializers.ModelSerializer):
         request = self.context.get("request", None)
         if request:
             user = request.user
-            postLike = PostLike.objects.filter(post=obj, user=user).order_by("-likeDateTime").first()
+            postLike = PostLike.objects.filter(
+                post=obj, user=user).order_by("-likeDateTime").first()
             if postLike:
                 return postLike.isActive
         return False
 
     def get_postLikeCount(self, obj):
         like_count = PostLike.objects.filter(post=obj, isActive=True).count()
-        unlike_count = PostLike.objects.filter(post=obj, isActive=False).count()
+        unlike_count = PostLike.objects.filter(
+            post=obj, isActive=False).count()
         return like_count - unlike_count
 
     def get_userProfilePictureUrl(self, obj):
@@ -78,7 +79,6 @@ class PostSerializer(serializers.ModelSerializer):
             return request.build_absolute_uri(photo_url)
         return None
 
-
     def get_sellerOperatingLocation(self, obj):
         menu_id = obj.menuItemId
         seller_instance = Seller.objects.filter(menuItemId=menu_id)
@@ -87,14 +87,25 @@ class PostSerializer(serializers.ModelSerializer):
             return seller_instance.sellerOperatingLocation
         return None
 
+class PostDistanceSerializer(PostSerializer):
+    """Serializer for nearbyPostListView"""
+    distance = serializers.SerializerMethodField()
 
+    class Meta(PostSerializer.Meta):
+        fields = PostSerializer.Meta.fields + ["distance"]
 
+    def get_distance(self, obj):
+        try:
+            return obj.distance
+        except AttributeError:
+            return None
 
 class PostDetailSerializer(PostSerializer):
     """Serializer for post detail view"""
 
     class Meta(PostSerializer.Meta):
         fields = PostSerializer.Meta.fields
+
 
 class PostLikeSerializer(serializers.ModelSerializer):
     userId = serializers.SerializerMethodField(read_only=True)
@@ -120,14 +131,17 @@ class PostLikeSerializer(serializers.ModelSerializer):
     def get_postId(self, obj):
         return obj.post.id
 
+
 class PostSaveSerializer(serializers.ModelSerializer):
     userId = serializers.ReadOnlyField(source="user.id")
     postId = serializers.ReadOnlyField(source="post.id")
 
     class Meta:
         model = PostSave
-        fields = ["id", "userId", "postId", "postIsSaved", "savedDateTime", "unsavedDateTime"]
+        fields = ["id", "userId", "postId", "postIsSaved",
+                  "savedDateTime", "unsavedDateTime"]
         read_only_fields = ["id", "savedDateTime", "unsavedDateTime"]
+
 
 class PostViewSerializer(serializers.ModelSerializer):
     userId = serializers.SerializerMethodField(read_only=True)
@@ -168,6 +182,7 @@ class PostCommentSerializer(serializers.ModelSerializer):
             "commentUserAgent"
         ]
 
+
 class PostShareSerializer(serializers.ModelSerializer):
     sharedById = serializers.SerializerMethodField(read_only=True)
     sharedToId = serializers.SerializerMethodField(read_only=True)
@@ -192,10 +207,9 @@ class PostShareSerializer(serializers.ModelSerializer):
 
     def get_sharedToId(self, obj):
         return obj.sharedTo.id
-    
+
     def get_postId(self, obj):
         return obj.post.id
-
 
 
 class PostReviewRatingSerializer(serializers.ModelSerializer):
@@ -216,7 +230,7 @@ class PostReviewRatingSerializer(serializers.ModelSerializer):
             "userProfilePictureUrl",
         ]
 
-    def get_userProfilePictureUrl(self,obj):
+    def get_userProfilePictureUrl(self, obj):
         if obj.user.userProfilePictureUrl and hasattr(obj.user.userProfilePictureUrl, 'url'):
             return obj.user.userProfilePictureUrl.url
         else:
@@ -236,6 +250,8 @@ class PostImageSerializer(serializers.ModelSerializer):
 class UsersListSerializer(serializers.ModelSerializer):
     """Serializer for retrieving a list of users"""
     userId = serializers.ReadOnlyField(source="id")
+
     class Meta:
         model = User
-        fields = ["userId", "userUsername", "userName", "userProfilePictureUrl"]
+        fields = ["userId", "userUsername",
+                  "userName", "userProfilePictureUrl"]
