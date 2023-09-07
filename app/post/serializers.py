@@ -3,7 +3,7 @@ Serializers for posts APIs
 """
 from rest_framework import serializers
 
-from core.models import Post, User, PostLike, PostSave, PostView, PostComment, Seller, PostShare
+from core.models import Post, User, PostLike, PostSave, PostView, PostComment, Seller, PostShare, MenuItem
 
 
 class PostSerializer(serializers.ModelSerializer):
@@ -17,6 +17,10 @@ class PostSerializer(serializers.ModelSerializer):
     userProfilePictureUrl = serializers.SerializerMethodField()
     sellerOperatingLocation = serializers.SerializerMethodField()
     userUsername = serializers.ReadOnlyField(source="user.userUsername")
+    menuItemName = serializers.SerializerMethodField()
+    menuItemBasicIngredient = serializers.SerializerMethodField()
+    menuItemCompositeIngredient = serializers.SerializerMethodField()
+    menuItemNutritionFacts = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
@@ -44,6 +48,10 @@ class PostSerializer(serializers.ModelSerializer):
             "userProfilePictureUrl",
             "sellerOperatingLocation",
             "userUsername",
+            "menuItemName",
+            "menuItemBasicIngredient",
+            "menuItemCompositeIngredient",
+            "menuItemNutritionFacts",
 
 
         ]
@@ -85,6 +93,38 @@ class PostSerializer(serializers.ModelSerializer):
 
         if seller_instance:
             return seller_instance.sellerOperatingLocation
+        return None
+
+    def get_menuItemName(self, obj):
+        menu_id = obj.menuItemId
+        menu_instance = MenuItem.objects.filter(id=menu_id)
+
+        if menu_instance:
+            return menu_instance.name
+        return None
+
+    def get_menuItemBasicIngredient(self, obj):
+        menu_id = obj.menuItemId
+        menu_instance = MenuItem.objects.filter(id=menu_id)
+
+        if menu_instance:
+            return menu_instance.basicIngredient
+        return None
+
+    def get_menuItemCompositeIngredient(self, obj):
+        menu_id = obj.menuItemId
+        menu_instance = MenuItem.objects.filter(id=menu_id)
+
+        if menu_instance:
+            return menu_instance.compositeIngredient
+        return None
+
+    def get_menuItemNutritionFacts(self, obj):
+        menu_id = obj.menuItemId
+        menu_instance = MenuItem.objects.filter(id=menu_id)
+
+        if menu_instance:
+            return menu_instance.nutritionFacts
         return None
 
 class PostDistanceSerializer(PostSerializer):

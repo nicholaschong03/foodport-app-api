@@ -15,7 +15,7 @@ from geopy.distance import geodesic
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from core.models import Post,PostLike, PostSave, PostView, PostComment, PostShare, Business
+from core.models import Post, PostLike, PostSave, PostView, PostComment, PostShare, Business
 
 from post.serializers import PostSerializer, PostDetailSerializer
 
@@ -68,7 +68,8 @@ class PrivatePostApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = create_user(
-            userEmailAddress="user@example.com", password="test123", userUsername="username03")
+            userEmailAddress="user@example.com", password="test123", userUsername="username03", userLatitude=40.7128,
+            userLongitude=-74.0060)
         self.client.force_authenticate(self.user)
 
     def test_retrieve_posts(self):
@@ -127,7 +128,8 @@ class PrivatePostApiTests(TestCase):
         url = reverse("post:like-post", kwargs={"post_id": post.id})
         res = self.client.post(url)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        latest_postLike = PostLike.objects.filter(post=post, user=self.user).order_by("-likeDateTime").first()
+        latest_postLike = PostLike.objects.filter(
+            post=post, user=self.user).order_by("-likeDateTime").first()
         if latest_postLike:
             self.assertTrue(latest_postLike.isActive)
         else:
@@ -144,36 +146,37 @@ class PrivatePostApiTests(TestCase):
         url = reverse("post:like-post", kwargs={"post_id": post.id})
         res = self.client.post(url)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        latest_postLike = PostLike.objects.filter(post=post, user=self.user).order_by("-likeDateTime").first()
+        latest_postLike = PostLike.objects.filter(
+            post=post, user=self.user).order_by("-likeDateTime").first()
         self.assertFalse(latest_postLike.isActive)
-
 
     def test_retrieve_post_likes(self):
         """Test retrieving a list of user who like a post"""
         other_user = create_user(
-            userEmailAddress = "user1@example.com",
-            password = "testpass112233",
-            userName = "Test Name",
-            userPhoneNumber = "+60123456543",
-            userUsername = "user1username"
+            userEmailAddress="user1@example.com",
+            password="testpass112233",
+            userName="Test Name",
+            userPhoneNumber="+60123456543",
+            userUsername="user1username"
         )
 
         other_user1 = create_user(
-            userEmailAddress = "user2@example.com",
-            password = "testpass112233",
-            userName = "Test Name 1",
-            userPhoneNumber = "+60123456634",
-            userUsername = "user2username"
+            userEmailAddress="user2@example.com",
+            password="testpass112233",
+            userName="Test Name 1",
+            userPhoneNumber="+60123456634",
+            userUsername="user2username"
         )
 
         post = create_post(user=self.user)
         PostLike.objects.create(user=other_user, post=post, isActive=True)
         PostLike.objects.create(user=other_user1, post=post, isActive=True)
-        url = reverse("post:post-liked-users-list", kwargs={"post_id": post.id})
+        url = reverse("post:post-liked-users-list",
+                      kwargs={"post_id": post.id})
         res = self.client.get(url)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(res.data),2)
+        self.assertEqual(len(res.data), 2)
 
         usernames_in_response = [user["userUsername"] for user in res.data]
         self.assertIn(other_user.userUsername, usernames_in_response)
@@ -182,10 +185,10 @@ class PrivatePostApiTests(TestCase):
     def test_retrieve_liked_posts(self):
         """Test retrieving a list of posts liked by a user"""
         new_user = create_user(
-            userEmailAddress = "user2@example.com",
-            password = "test123",
-            userPhoneNumber = "0123456789",
-            userUsername= "username1"
+            userEmailAddress="user2@example.com",
+            password="test123",
+            userPhoneNumber="0123456789",
+            userUsername="username1"
         )
 
         post1 = create_post(user=new_user)
@@ -207,19 +210,19 @@ class PrivatePostApiTests(TestCase):
     def test_retrieve_post_like_list(self):
         """Test retrieving a list of postLikes for a user"""
         other_user = create_user(
-            userEmailAddress = "user1@example.com",
-            password = "testpass112233",
-            userName = "Test Name",
-            userPhoneNumber = "+60123456543",
-            userUsername = "user1username"
+            userEmailAddress="user1@example.com",
+            password="testpass112233",
+            userName="Test Name",
+            userPhoneNumber="+60123456543",
+            userUsername="user1username"
         )
 
         other_user1 = create_user(
-            userEmailAddress = "user2@example.com",
-            password = "testpass112233",
-            userName = "Test Name 1",
-            userPhoneNumber = "+60123456634",
-            userUsername = "user2username"
+            userEmailAddress="user2@example.com",
+            password="testpass112233",
+            userName="Test Name 1",
+            userPhoneNumber="+60123456634",
+            userUsername="user2username"
         )
 
         post = create_post(user=self.user)
@@ -229,36 +232,37 @@ class PrivatePostApiTests(TestCase):
         res = self.client.get(url)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(res.data),2)
+        self.assertEqual(len(res.data), 2)
         self.assertIn(res.data[0]["userId"], [other_user.id, other_user1.id])
         self.assertIn(res.data[1]["userId"], [other_user.id, other_user1.id])
 
     def test_save_unsave_post(self):
         """Test saving and unsaving a post"""
         user1 = create_user(userEmailAddress="user1@example.com",
-                               password = "test123",
-                               userPhoneNumber = "0123456834",
-                               userUsername="username1")
+                            password="test123",
+                            userPhoneNumber="0123456834",
+                            userUsername="username1")
         post = create_post(user=user1)
         url = reverse("post:save-post", kwargs={"post_id": post.id})
 
-        #save the post
+        # save the post
         res = self.client.post(url)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertTrue(PostSave.objects.filter(user=self.user, post=post, postIsSaved=True).exists())
+        self.assertTrue(PostSave.objects.filter(
+            user=self.user, post=post, postIsSaved=True).exists())
 
-        #unsave the post
+        # unsave the post
         res = self.client.post(url)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertFalse(PostSave.objects.filter(user=self.user, post=post, postIsSaved=True).exists())
-
+        self.assertFalse(PostSave.objects.filter(
+            user=self.user, post=post, postIsSaved=True).exists())
 
     def test_list_saved_posts(self):
         """Testing listing saved posts"""
         user1 = create_user(userEmailAddress="user1@example.com",
-                            password = "test123",
-                            userPhoneNumber = "012345678733",
-                            userUsername = "username1")
+                            password="test123",
+                            userPhoneNumber="012345678733",
+                            userUsername="username1")
         post1 = create_post(user=user1)
         post2 = create_post(user=user1)
 
@@ -277,10 +281,10 @@ class PrivatePostApiTests(TestCase):
 
     def test_view_post(self):
         """Test tracking a user has viewed a post"""
-        new_user = create_user(userEmailAddress = "user2@example.com",
-                               password = "test123",
-                               userPhoneNumber = "012345678",
-                               userUsername = "username2")
+        new_user = create_user(userEmailAddress="user2@example.com",
+                               password="test123",
+                               userPhoneNumber="012345678",
+                               userUsername="username2")
         post = create_post(user=new_user)
         url = reverse("post:view-post", kwargs={"post_id": post.id})
         res = self.client.post(url)
@@ -288,15 +292,15 @@ class PrivatePostApiTests(TestCase):
 
     def test_retrieve_post_view_list(self):
         """Test retrieving a list of postView for a user"""
-        new_user = create_user(userEmailAddress = "user2@example.com",
-                               password = "test123",
-                               userPhoneNumber = "012345678",
-                               userUsername = "username2")
+        new_user = create_user(userEmailAddress="user2@example.com",
+                               password="test123",
+                               userPhoneNumber="012345678",
+                               userUsername="username2")
 
-        new_user1 = create_user(userEmailAddress = "user3@example.com",
-                               password = "test1234",
-                               userPhoneNumber = "0123456733",
-                               userUsername = "username3")
+        new_user1 = create_user(userEmailAddress="user3@example.com",
+                                password="test1234",
+                                userPhoneNumber="0123456733",
+                                userUsername="username3")
         post = create_post(user=new_user)
         PostView.objects.create(user=new_user1, post=post)
         PostView.objects.create(user=self.user, post=post)
@@ -308,13 +312,12 @@ class PrivatePostApiTests(TestCase):
         self.assertIn(res.data[0]["userId"], [new_user1.id, self.user.id])
         self.assertIn(res.data[1]["userId"], [new_user1.id, self.user.id])
 
-
     def test_create_comment_post(self):
         """Test creating a comment on a post"""
-        new_user = create_user(userEmailAddress = "user2@example.com",
-                                password = "test123",
-                                userPhoneNumber = "0123456789",
-                                userUsername = "username2")
+        new_user = create_user(userEmailAddress="user2@example.com",
+                               password="test123",
+                               userPhoneNumber="0123456789",
+                               userUsername="username2")
         post = create_post(user=new_user)
         url = reverse("post:comment-post", kwargs={"post_id": post.id})
         payload = {
@@ -325,14 +328,14 @@ class PrivatePostApiTests(TestCase):
 
     def test_retrieve_post_comment_list(self):
         """Test retrieving a list of comments of a post"""
-        new_user = create_user(userEmailAddress = "user1@example.com",
-                               password = "test123",
-                               userPhoneNumber = "012345689",
-                               userUsername = "username3")
-        new_user2 = create_user(userEmailAddress = "user2@example.com",
-                               password = "test12344",
-                               userPhoneNumber = "0123456829",
-                               userUsername = "username2")
+        new_user = create_user(userEmailAddress="user1@example.com",
+                               password="test123",
+                               userPhoneNumber="012345689",
+                               userUsername="username3")
+        new_user2 = create_user(userEmailAddress="user2@example.com",
+                                password="test12344",
+                                userPhoneNumber="0123456829",
+                                userUsername="username2")
         post = create_post(user=new_user)
         PostComment.objects.create(user=new_user2, post=post)
         PostComment.objects.create(user=self.user, post=post)
@@ -344,12 +347,11 @@ class PrivatePostApiTests(TestCase):
         self.assertIn(res.data[0]["userId"], [new_user2.id, self.user.id])
         self.assertIn(res.data[1]["userId"], [new_user2.id, self.user.id])
 
-
     def test_delete_postcomment(self):
-        new_user = create_user(userEmailAddress = "user1@example.com",
-                               password = "test123",
-                               userPhoneNumber = "012345689",
-                               userUsername = "username3")
+        new_user = create_user(userEmailAddress="user1@example.com",
+                               password="test123",
+                               userPhoneNumber="012345689",
+                               userUsername="username3")
         post = create_post(user=new_user)
         comment = PostComment.objects.create(user=self.user, post=post)
         url = reverse("post:postcomment-delete", kwargs={"pk": comment.id})
@@ -360,14 +362,14 @@ class PrivatePostApiTests(TestCase):
         self.assertFalse(exists)
 
     def test_delete_comment_not_owner(self):
-        new_user = create_user(userEmailAddress = "user1@example.com",
-                               password = "test123",
-                               userPhoneNumber = "012345689",
-                               userUsername = "username3")
-        new_user2 = create_user(userEmailAddress = "user2@example.com",
-                               password = "test12344",
-                               userPhoneNumber = "0123456829",
-                               userUsername = "username2")
+        new_user = create_user(userEmailAddress="user1@example.com",
+                               password="test123",
+                               userPhoneNumber="012345689",
+                               userUsername="username3")
+        new_user2 = create_user(userEmailAddress="user2@example.com",
+                                password="test12344",
+                                userPhoneNumber="0123456829",
+                                userUsername="username2")
         post = create_post(user=new_user)
         comment = PostComment.objects.create(user=new_user2, post=post)
         url = reverse("post:postcomment-delete", kwargs={"pk": comment.id})
@@ -378,42 +380,40 @@ class PrivatePostApiTests(TestCase):
         exists = PostComment.objects.filter(id=comment.id).exists()
         self.assertTrue(exists)
 
-
     def test_create_share_post(self):
         """Test sharing a post"""
-        new_user = create_user(userEmailAddress = "user2@example.com",
-                               password = "test123",
-                               userPhoneNumber = "0123456789",
-                               userUsername = "username2")
+        new_user = create_user(userEmailAddress="user2@example.com",
+                               password="test123",
+                               userPhoneNumber="0123456789",
+                               userUsername="username2")
         post = create_post(user=self.user)
-        url = reverse("post:share-post", kwargs={"post_id":post.id,
-                                                 "user_id":new_user.id})
+        url = reverse("post:share-post", kwargs={"post_id": post.id,
+                                                 "user_id": new_user.id})
         res = self.client.post(url)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
 
         self.assertTrue(
             PostShare.objects.filter(
-                post = post,
-                sharedBy = self.user,
-                sharedTo = new_user
+                post=post,
+                sharedBy=self.user,
+                sharedTo=new_user
             ).exists()
         )
 
-
     def test_nearby_posts_list_view(self):
         """Test calculating the post"""
-        new_user = create_user(userEmailAddress = "user2@example.com",
-                               password = "test123",
-                               userPhoneNumber = "0123456789",
-                               userUsername = "username2",
-                               userLatitude=40.7128,
-                               userLongitude=-74.0060 )
+        new_user = create_user(userEmailAddress="user2@example.com",
+                               password="test123",
+                               userPhoneNumber="0123456789",
+                               userUsername="username2", )
         create_post(user=new_user, menuItemId=1)
         create_post(user=new_user, menuItemId=2)
 
-        business = Business.objects.create(user=new_user, menuItemId=1, businessOperatingLatitude=40.730610, businessOperatingLongitude=-73.935242)
-        business2 = Business.objects.create(user=new_user, menuItemId=2, businessOperatingLatitude=40.659104, businessOperatingLongitude=-73.960484)
+        business = Business.objects.create(
+            user=new_user, menuItemId=1, businessOperatingLatitude=40.730610, businessOperatingLongitude=-73.935242)
+        business2 = Business.objects.create(
+            user=new_user, menuItemId=2, businessOperatingLatitude=40.659104, businessOperatingLongitude=-73.960484)
 
         url = reverse("post:nearby-post-feed")
 
@@ -424,26 +424,25 @@ class PrivatePostApiTests(TestCase):
         posts = res.data["results"]
 
         user_location = (self.user.userLatitude, self.user.userLongitude)
-        business1_location = (business.businessOperatingLatitude, business.businessOperatingLongitude)
-        business2_location = (business2.businessOperatingLatitude, business2.businessOperatingLongitude)
+        business1_location = (business.businessOperatingLatitude,
+                              business.businessOperatingLongitude)
+        business2_location = (
+            business2.businessOperatingLatitude, business2.businessOperatingLongitude)
 
-        distance_to_business1 = geodesic(user_location, business1_location).kilometers
-        distance_to_business2 = geodesic(user_location, business2_location).kilometers
+        distance_to_business1 = geodesic(
+            user_location, business1_location).kilometers
+        distance_to_business2 = geodesic(
+            user_location, business2_location).kilometers
 
-        print(f"Calculated distances: {distance_to_business1}, {distance_to_business2}")
-        print(f"Response distances: {posts[0]['distance']}, {posts[1]['distance']}")
+        print(
+            f"Calculated distances: {distance_to_business1}, {distance_to_business2}")
+        print(
+            f"Response distances: {posts[0]['distance']}, {posts[1]['distance']}")
 
         self.assertEqual(posts[0]['distance'], distance_to_business1)
         self.assertEqual(posts[1]['distance'], distance_to_business2)
 
         self.assertLess(posts[0]['distance'], posts[1]['distance'])
-
-
-
-
-
-
-
 
     def test_retrieve_menus_category_food(self):
         """Test retrieving menus where category is 'Food'"""
@@ -481,7 +480,6 @@ class PrivatePostApiTests(TestCase):
 
         )
 
-
         create_post(
             user=self.user,
             postReview="very delicious",
@@ -496,10 +494,7 @@ class PrivatePostApiTests(TestCase):
         url = reverse("post:for-you-post-feed")
         res = self.client.get(url, {"menuItemId": 1})
 
-
-
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-
 
         self.assertEqual(len(res.data['results']), 2)
 
@@ -525,7 +520,6 @@ class PrivatePostApiTests(TestCase):
 
         )
 
-
         post3 = create_post(
             user=self.user,
             postReview="very delicious",
@@ -543,13 +537,6 @@ class PrivatePostApiTests(TestCase):
 
         serializer_data = res.data
         self.assertEqual(len(serializer_data["results"]), 3)
-
-
-
-
-
-
-
 
     def test_post_list_limited_to_user(self):
         """Test list of posts is limited to authenticated user."""

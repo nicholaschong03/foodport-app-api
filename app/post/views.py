@@ -376,8 +376,6 @@ class NearbyPostsListView(generics.ListAPIView):
                 post.distance = geodesic(
                     user_location, business_location).kilometers
 
-                print(f"User Location: {user_location}, Business Location: {business_location}, Calculated Distance: {post.distance}")
-
             except Business.DoesNotExist:
                 # If business does not exist, set a high distance value
                 post.distance = 99999
@@ -442,42 +440,6 @@ class ReturnHighestDeliciousRatinReview(generics.ListAPIView):
     filterset_fields = ["menuItemId"]
     pagination_class = CustomPostPagination
 
-
-# def share_post_view(request, post_id, user_id):
-#     # Retrieve the post and users from the database
-#     try:
-#         post = Post.objects.get(pk=post_id)
-#     except Post.DoesNotExist:
-#         return Response({"detail": "Post not found"}, status=404)
-
-#     try:
-#         shared_to = User.objects.get(pk=user_id)
-#     except User.DoesNotExist:
-#         return Response({"detail": "User not found"}, status=404)
-
-#     shared_by = request.user
-
-#     # Create the PostShare instance
-#     serializer = serializers.PostShareSerializer(data={
-#         "post": post.id,
-#         "sharedBy": shared_by.id,
-#         "sharedTo": shared_to.id
-#     })
-
-#     serializer.is_valid(raise_exception=True)
-#     serializer.save()
-
-
-#     # Send a WebSocket message to the shared_to user
-#     async_to_sync(channel_layer.group_send)(
-#         f"user_{shared_to.id}",
-#         {
-#             "type": "share.post",
-#             "post_id": post.id,
-#             "shared_by_username": shared_by.username,
-#         }
-#     )
-#     return HttpResponse("Post shared successfully")
 
 class SharePostView(generics.GenericAPIView):
     """This view is for user share the post"""
