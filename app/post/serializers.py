@@ -96,36 +96,32 @@ class PostSerializer(serializers.ModelSerializer):
         return None
 
     def get_menuItemName(self, obj):
-        menu_id = obj.menuItemId
-        menu_instance = MenuItem.objects.filter(id=menu_id)
-
-        if menu_instance:
-            return menu_instance.name
-        return None
+        try:
+            menu_item = MenuItem.objects.get(id=obj.menuItemId)
+            return menu_item.name
+        except MenuItem.DoesNotExist:
+            return None
 
     def get_menuItemBasicIngredient(self, obj):
-        menu_id = obj.menuItemId
-        menu_instance = MenuItem.objects.filter(id=menu_id)
-
-        if menu_instance:
-            return menu_instance.basicIngredient
-        return None
+        try:
+            menu_item = MenuItem.objects.get(id=obj.menuItemId)
+            return menu_item.basicIngredient
+        except MenuItem.DoesNotExist:
+            return None
 
     def get_menuItemCompositeIngredient(self, obj):
-        menu_id = obj.menuItemId
-        menu_instance = MenuItem.objects.filter(id=menu_id)
-
-        if menu_instance:
-            return menu_instance.compositeIngredient
-        return None
+        try:
+            menu_item = MenuItem.objects.get(id=obj.menuItemId)
+            return menu_item.compositeIngredient
+        except MenuItem.DoesNotExist:
+            return None
 
     def get_menuItemNutritionFacts(self, obj):
-        menu_id = obj.menuItemId
-        menu_instance = MenuItem.objects.filter(id=menu_id)
-
-        if menu_instance:
-            return menu_instance.nutritionFacts
-        return None
+        try:
+            menu_item = MenuItem.objects.get(id=obj.menuItemId)
+            return menu_item.nutritionFacts
+        except MenuItem.DoesNotExist:
+            return None
 
 class PostDistanceSerializer(PostSerializer):
     """Serializer for nearbyPostListView"""
