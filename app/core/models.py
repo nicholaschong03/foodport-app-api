@@ -267,7 +267,7 @@ class Business(models.Model):
     businessVerified = models.BooleanField(default=False)
     businessSafeFood = models.BooleanField(default=False)
     businessHalal = models.BooleanField(default=False)
-    businessOwnerId = models.IntegerField(null=True, blank=True)
+    sellerId = models.IntegerField(null=True, blank=True)
     businessInfoContributor = models.JSONField(null=True, blank=True)
     menuItemId = models.JSONField(blank=True, null=True, default=list)
     businessOperatingLatitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)

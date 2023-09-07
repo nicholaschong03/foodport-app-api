@@ -94,7 +94,7 @@ class BusinessDetailSerializer(BusinessSerializer):
                   "businessHalal",
                   "businessInfoContributor",
                   "menuItemId",
-                  "businessOwnerId",
+                  "sellerId",
         ]
 
     def get_businessInfoContributor(self,obj):
