@@ -2,8 +2,11 @@ from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework.authtoken.models import Token
-from rest_framework.test import APIClient
+from rest_framework.test import APIClient, APITestCase
 from rest_framework import status
+
+from core.models import User
+from rest_framework.authtoken.models import Token
 
 import tempfile
 import os
@@ -17,6 +20,7 @@ LOGOUT_URL = reverse("user:logout")
 IMAGE_URL = reverse("user:upload_profile_image")
 COVER_PICTURE_URL = reverse("user:upload_cover_picture")
 USER_LIST_URL = reverse("user:user_list")
+FIREBASE_URL = reverse("user:firebase_auth")
 
 
 def detail_url(user_id):
@@ -514,6 +518,74 @@ class ImageUploadTests(TestCase):
         self.assertTrue(os.path.exists(self.user.userCoverPictureUrl.path))
 
         self.assertFalse(os.path.exists(old_image_path))
+
+
+
+# class FirebaseAuthViewTestCase(APITestCase):
+
+#     def setUp(self):
+#         # Creating a user for testing the existing user flow
+#         self.user = User.objects.create_user(
+#             userEmailAddress = "test@example.com",
+#             userName = "Test User",
+#             userUsername = "testuser",
+#             userProfilePictureUrl = 'http://example.com/profile.jpg',
+#             firebase_uid = "test_firebase_uid",
+#         )
+
+#         self.token = Token.objects.create(user=self.user)
+
+
+#     def test_existing_user_flow(self):
+#         # Testing the flow where the user already exists
+#         data = {
+#             "idToken": "",
+#             "localId": self.user.id
+#         }
+
+#         res = self.client.post(FIREBASE_URL, data)
+
+#         self.assertEqual(res.status_code, status.HTTP_200_OK)
+#         self.assertEqual(res.data["localId"], str(self.user.id))
+#         self.assertEqual(res.data["idToken"], self.token.key)
+
+#     def test_new_user_registration_flow(self):
+#         # Testing the flow where a new user registers
+#         data = {
+#             "idToken": "some_valid_id_token_for_new_user",  # Replace with a valid ID token for a new user
+#         }
+
+#         response = self.client.post(FIREBASE_URL, data=data)
+
+#         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+#         # Check that the response contains the correct keys
+#         self.assertIn('idToken', response.data)
+#         self.assertIn('localId', response.data)
+#         self.assertIn('expiresIn', response.data)
+
+#         # Get the localId from the response
+#         local_id = response.data['localId']
+
+#         # Check that a new user was created in the database
+#         try:
+#             user = User.objects.get(id=local_id)
+#         except User.DoesNotExist:
+#             self.fail("New user was not created in the database")
+
+#         # Check that the user details are correct (adjust the fields as per your User model)
+#         self.assertEqual(user.userEmailAddress, 'expected_email@example.com')  # Replace with the expected email
+#         # ... (add more assertions to check other user fields) ...
+
+#         # Check that a token was created for the new user
+#         try:
+#             token = Token.objects.get(user=user)
+#         except Token.DoesNotExist:
+#             self.fail("Token was not created for the new user")
+
+#         # Check that the token in the response matches the token in the database
+#         self.assertEqual(response.data['idToken'], token.key)
+
 
 
 
