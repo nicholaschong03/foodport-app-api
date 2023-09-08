@@ -17,6 +17,8 @@ from core.models import User
 from rest_framework import status
 from django.conf import settings
 
+from django.db import DatabaseError
+
 from rest_framework.views import APIView
 
 from PIL import Image
@@ -141,9 +143,15 @@ class FirebaseAuthView(APIView):
             except User.DoesNotExist:
                 user_email = decoded_token.get("email")
 
-                user = User.objects.create_user(userEmailAddress= user_email, firebase_uid = firebase_uid)
-                user.save()
-
+                try:
+                    user = User.objects.create_user(
+                        userEmailAddress=user_email, firebase_uid=firebase_uid)
+                except DatabaseError as e:
+                    print(f"An error occured with the database: {e}")
+                try:
+                    user.save()
+                except DatabaseError as e:
+                    print(f"An error occured with the database(2): {e}")
             token, _ = Token.objects.get_or_create(user=user)
             response_data = {
                 "idToken": token.key,
@@ -196,15 +204,17 @@ class UploadProfileImageView(ManagerUserView):
     def compress_image(self, image):
         image_temporary = Image.open(image)
         output_io_stream = BytesIO()
-        image_temporary.save(output_io_stream , format='JPEG', quality=60)
+        image_temporary.save(output_io_stream, format='JPEG', quality=60)
         output_io_stream.seek(0)
-        image = ContentFile(output_io_stream.read(), f"{image.name.split('.')[0]}.jpeg")
+        image = ContentFile(output_io_stream.read(),
+                            f"{image.name.split('.')[0]}.jpeg")
         return image
 
     def post(self, request, *args, **kwargs):
         user = self.get_object()
         data = request.data.copy()  # make a copy of the data
-        data['userProfilePictureUrl'] = self.compress_image(request.FILES['userProfilePictureUrl'])  # compress image and assign it back
+        data['userProfilePictureUrl'] = self.compress_image(
+            request.FILES['userProfilePictureUrl'])  # compress image and assign it back
         serializer = self.get_serializer(user, data=data)
 
         if serializer.is_valid():
@@ -219,6 +229,7 @@ class UploadProfileImageView(ManagerUserView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class UploadCoverPictureView(ManagerUserView):
     """Upload a cover image for the authenticated user"""
     serializer_class = UserProfileCoverSerializer
@@ -226,15 +237,17 @@ class UploadCoverPictureView(ManagerUserView):
     def compress_image(self, image):
         image_temporary = Image.open(image)
         output_io_stream = BytesIO()
-        image_temporary.save(output_io_stream , format='JPEG', quality=60)
+        image_temporary.save(output_io_stream, format='JPEG', quality=60)
         output_io_stream.seek(0)
-        image = ContentFile(output_io_stream.read(), f"{image.name.split('.')[0]}.jpeg")
+        image = ContentFile(output_io_stream.read(),
+                            f"{image.name.split('.')[0]}.jpeg")
         return image
 
     def post(self, request, *args, **kwargs):
         user = self.get_object()
         data = request.data.copy()  # make a copy of the data
-        data['userCoverPictureUrl'] = self.compress_image(request.FILES['userCoverPictureUrl'])  # compress image and assign it back
+        data['userCoverPictureUrl'] = self.compress_image(
+            request.FILES['userCoverPictureUrl'])  # compress image and assign it back
         serializer = self.get_serializer(user, data=data)
 
         if serializer.is_valid():

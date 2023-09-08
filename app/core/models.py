@@ -122,7 +122,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     userAge = models.IntegerField(blank=True, null=True)
     following = models.ManyToManyField(
         "self", symmetrical=False, related_name="followers", blank=True)
-    userGender = models.CharField(max_length=255, blank=True)
+    userGender = models.CharField(max_length=255, blank=True)   
     userLocation = models.JSONField(default=dict, blank=True)
     userShowBirthDate = models.BooleanField(default=True)
     userCoverPictureUrl = models.ImageField(
