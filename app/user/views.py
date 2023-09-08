@@ -142,16 +142,15 @@ class FirebaseAuthView(APIView):
                 user = User.objects.get(firebase_uid=firebase_uid)
             except User.DoesNotExist:
                 user_email = decoded_token.get("email")
+                name = decoded_token.get("name")
+                username = decoded_token.get("username")
+                photoURL = decoded_token.get("photoURL")
+                phone_num = decoded_token.get("phoneNumber")
 
-                try:
-                    user = User.objects.create_user(
-                        userEmailAddress=user_email, firebase_uid=firebase_uid)
-                except DatabaseError as e:
-                    print(f"An error occured with the database: {e}")
-                try:
-                    user.save()
-                except DatabaseError as e:
-                    print(f"An error occured with the database(2): {e}")
+                user = User.objects.create_user(
+                    userEmailAddress=user_email, firebase_uid=firebase_uid, userName=name, userProfilePictureUrl=photoURL, userUserName=username, userPhoneNumber=phone_num)
+                user.save()
+
             token, _ = Token.objects.get_or_create(user=user)
             response_data = {
                 "idToken": token.key,
@@ -159,6 +158,7 @@ class FirebaseAuthView(APIView):
                 "expiresIn": settings.EXPIRATION_TIME,
             }
             return Response(response_data, status=status.HTTP_200_OK)
+
 
 
 class ManagerUserView(generics.RetrieveUpdateAPIView):

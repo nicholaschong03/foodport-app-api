@@ -47,7 +47,7 @@ class MenuItemListView(generics.ListAPIView):
 
     queryset = MenuItem.objects.all().order_by("name")
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ["category", "sellerId"]
+    filterset_fields = ["category", "businessId"]
     search_fields = ["name"]
     pagination_class = CustomMenuItemPagination
 
