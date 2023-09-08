@@ -25,7 +25,7 @@ class MenuItemSerializer(serializers.ModelSerializer):
                   "price",
                   "category",
                   "post_photo_url",
-                  "sellerId",
+                  "businessId",
                   "delicious_rating",
                   "eat_again_rating",
                   "worth_it_rating",

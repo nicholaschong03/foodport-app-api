@@ -197,3 +197,9 @@ CORS_ORIGIN_WHITELIST = [
 
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+CSRF_COOKIE_SECURE = True
+
+CSRF_COOKIE_DOMAIN = 'api.foodport.com.my'
+
+CSRF_TRUSTED_ORIGINS = ['https://api.foodport.com.my']
