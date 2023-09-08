@@ -21,6 +21,7 @@ class PostSerializer(serializers.ModelSerializer):
     menuItemBasicIngredient = serializers.SerializerMethodField()
     menuItemCompositeIngredient = serializers.SerializerMethodField()
     menuItemNutritionFacts = serializers.SerializerMethodField()
+    businessId = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
@@ -52,6 +53,7 @@ class PostSerializer(serializers.ModelSerializer):
             "menuItemBasicIngredient",
             "menuItemCompositeIngredient",
             "menuItemNutritionFacts",
+            "businessId",
 
 
         ]
@@ -120,6 +122,13 @@ class PostSerializer(serializers.ModelSerializer):
         try:
             menu_item = MenuItem.objects.get(id=obj.menuItemId)
             return menu_item.nutritionFacts
+        except MenuItem.DoesNotExist:
+            return None
+
+    def get_businessId(self, obj):
+        try:
+            menu_item = MenuItem.objects.get(id=obj.menuItemId)
+            return menu_item.businessId
         except MenuItem.DoesNotExist:
             return None
 

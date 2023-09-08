@@ -122,7 +122,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     userAge = models.IntegerField(blank=True, null=True)
     following = models.ManyToManyField(
         "self", symmetrical=False, related_name="followers", blank=True)
-    userGender = models.CharField(max_length=255, blank=True)   
+    userGender = models.CharField(max_length=255, blank=True)
     userLocation = models.JSONField(default=dict, blank=True)
     userShowBirthDate = models.BooleanField(default=True)
     userCoverPictureUrl = models.ImageField(
@@ -311,7 +311,6 @@ class MenuItem(models.Model):
     postId = models.JSONField(null=True, blank=True, default=list)
     dishInfoContributor = models.JSONField(default=dict, blank=True, null=True)
     sellerId = models.IntegerField(null=True, blank=True)
-    businessId = models.IntegerField(null=True, blank=True)
     businessId = models.IntegerField(null=True, blank=True)
     category = models.CharField(max_length=255)
 
