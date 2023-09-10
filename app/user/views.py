@@ -143,9 +143,9 @@ class FirebaseAuthView(APIView):
             except User.DoesNotExist:
                 user_email = decoded_token.get("email")
                 name = decoded_token.get("name")
-                username = decoded_token.get("username") or None
+                # username = decoded_token.get("username", None)
                 # # photoURL = decoded_token.get("photoURL", None)
-                phone_num = decoded_token.get("phoneNumber") or None
+                # phone_num = decoded_token.get("phoneNumber", None)
 
                 user = User.objects.create_user(
                     userEmailAddress=user_email, firebase_uid=firebase_uid, userName=name, userUserName=username, userPhoneNumber=phone_num)

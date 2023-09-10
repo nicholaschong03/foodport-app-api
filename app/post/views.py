@@ -154,7 +154,7 @@ class PostLikeListView(generics.ListAPIView):
            PostLikes for the currently authenticated user
         """
         post_id = self.kwargs["post_id"]
-        return PostLike.objects.filter(post_id=post_id)
+        return PostLike.objects.filter(post_id=post_id).order_by()
 
 
 class UserlikedPostsListView(generics.ListAPIView):
@@ -171,10 +171,26 @@ class UserlikedPostsListView(generics.ListAPIView):
         # Annotate PostLike objects with the maximum likeDateTime for each post.
         post_likes = PostLike.objects.filter(user_id=user_id).values(
             "post").annotate(max_likeDateTime=Max("likeDateTime"))
-        # Filter for the PostLike objects that match the maximum likeDateTime and have isActive=True.
-        liked_posts_ids = [post_like["post"] for post_like in post_likes if PostLike.objects.filter(
-            post_id=post_like["post"], likeDateTime=post_like["max_likeDateTime"], isActive=True).exists()]
-        return Post.objects.filter(id__in=liked_posts_ids)
+        # # Filter for the PostLike objects that match the maximum likeDateTime and have isActive=True.
+        # liked_posts_ids = [post_like["post"] for post_like in post_likes if PostLike.objects.filter(
+        #     post_id=post_like["post"], likeDateTime=post_like["max_likeDateTime"], isActive=True).exists()]
+        # return Post.objects.filter(id__in=liked_posts_ids).order_by("-likes__likeDateTime")
+
+        # Create a dictionary with post id as key and like date time as value
+        liked_posts_dict = {post_like["post"]: post_like["max_likeDateTime"] for post_like in post_likes}
+
+        # Get the list of post ids
+        liked_posts_ids = list(liked_posts_dict.keys())
+
+        # Get the queryset of liked posts
+        queryset = Post.objects.filter(id__in=liked_posts_ids)
+
+        # Order the queryset by like date time in descending order
+        queryset = queryset.annotate(likeDateTime=models.Case(
+            *[models.When(pk=pk, then=date) for pk, date in liked_posts_dict.items()]
+        )).order_by("-likeDateTime")
+
+        return queryset
 
 
 class SavePostView(generics.GenericAPIView):
@@ -209,7 +225,7 @@ class ListSavedPostView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        return Post.objects.filter(saves__user=user, saves__postIsSaved=True)
+        return Post.objects.filter(saves__user=user, saves__postIsSaved=True).order_by("-saves__savedDateTime")
 
 
 class ViewPostView(generics.GenericAPIView):
