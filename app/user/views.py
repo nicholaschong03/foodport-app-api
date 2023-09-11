@@ -148,7 +148,7 @@ class FirebaseAuthView(APIView):
                 # phone_num = decoded_token.get("phoneNumber", None)
 
                 user = User.objects.create_user(
-                    userEmailAddress=user_email, firebase_uid=firebase_uid, userName=name, userUserName=username, userPhoneNumber=phone_num)
+                    userEmailAddress=user_email, firebase_uid=firebase_uid, userName=name)
                 user.save()
 
             token, _ = Token.objects.get_or_create(user=user)
