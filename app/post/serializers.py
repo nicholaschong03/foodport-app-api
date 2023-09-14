@@ -214,19 +214,30 @@ class PostViewSerializer(serializers.ModelSerializer):
 class PostCommentSerializer(serializers.ModelSerializer):
     userId = serializers.ReadOnlyField(source="user.id")
     postId = serializers.ReadOnlyField(source="post.id")
+    postCommentId = serializers.ReadOnlyField(source="id")
+    userName = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = PostComment
         fields = [
-            "id",
+            "postCommentId",
             "postId",
             "userId",
-            "comment",
-            "commentDateTime",
-            "commentIpAddress",
-            "commentUserAgent"
+            "commentContent",
+            "commentPublishDateTime",
+            "commentPublishIpAddress",
+            "commentUserAgent",
+            "commentLikes",
+            "commentReplies",
+            "commentPublishLocation",
+            "userName",
         ]
 
+    def get_userName(self, obj):
+        username = obj.user.userName
+        if username:
+            return username
+        return None
 
 class PostShareSerializer(serializers.ModelSerializer):
     sharedById = serializers.SerializerMethodField(read_only=True)

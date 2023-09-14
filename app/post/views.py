@@ -277,11 +277,10 @@ class CretePostCommentView(generics.CreateAPIView):
         serializer.save(
             user=self.request.user,
             post=post,
-            commentIpAddress=self.request.META.get("REMOTE_ADDR"),
+            commentPublishIpAddress=self.request.META.get("REMOTE_ADDR"),
             commentUserAgent=self.request.META.get("HTTP_USER_AGENT")
 
         )
-        # return Response({"status":"commented"}, status=status.HTTP_200_OK)
 
 
 class ListPostCommentView(generics.ListAPIView):
@@ -292,7 +291,7 @@ class ListPostCommentView(generics.ListAPIView):
 
     def get_queryset(self):
         post_id = self.kwargs.get("post_id")
-        return PostComment.objects.filter(post_id=post_id).order_by("-commentDateTime")
+        return PostComment.objects.filter(post_id=post_id).order_by("-commentPublishDateTime")
 
 
 class DeleteCommentView(generics.DestroyAPIView):

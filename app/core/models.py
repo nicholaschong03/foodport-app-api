@@ -223,10 +223,14 @@ class PostComment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     post = models.ForeignKey(
         Post, on_delete=models.CASCADE, related_name="comments")
-    comment = models.TextField()
-    commentDateTime = models.DateTimeField(auto_now_add=True)
-    commentIpAddress = models.GenericIPAddressField(null=True, blank=True)
+    commentContent = models.TextField()
+    commentPublishDateTime = models.DateTimeField(auto_now_add=True)
+    commentPublishIpAddress = models.GenericIPAddressField(null=True, blank=True)
     commentUserAgent = models.TextField(null=True, blank=True)
+    commentLikes = models.JSONField(blank=True, null=True, default=list)
+    commentReplies = models.JSONField(blank=True, null=True, default=list)
+    commentPublishLastUpdatedDateTime = models.DateTimeField(null=True, blank=True)
+    commentPublishLocation = models.TextField(blank=True, null=True)
 
 
 class PostShare(models.Model):

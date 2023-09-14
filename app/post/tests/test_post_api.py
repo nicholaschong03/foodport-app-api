@@ -321,7 +321,7 @@ class PrivatePostApiTests(TestCase):
         post = create_post(user=new_user)
         url = reverse("post:comment-post", kwargs={"post_id": post.id})
         payload = {
-            "comment": "This is a test comment"
+            "commentContent": "This is a test comment"
         }
         res = self.client.post(url, payload)
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
