@@ -171,10 +171,9 @@ class UserlikedPostsListView(generics.ListAPIView):
         # Annotate PostLike objects with the maximum likeDateTime for each post.
         post_likes = PostLike.objects.filter(user_id=user_id).values(
             "post").annotate(max_likeDateTime=Max("likeDateTime"))
-        # # Filter for the PostLike objects that match the maximum likeDateTime and have isActive=True.
-        # liked_posts_ids = [post_like["post"] for post_like in post_likes if PostLike.objects.filter(
-        #     post_id=post_like["post"], likeDateTime=post_like["max_likeDateTime"], isActive=True).exists()]
-        # return Post.objects.filter(id__in=liked_posts_ids).order_by("-likes__likeDateTime")
+
+        if not post_likes:
+            return Post.objects.none()
 
         # Create a dictionary with post id as key and like date time as value
         liked_posts_dict = {post_like["post"]: post_like["max_likeDateTime"] for post_like in post_likes}
