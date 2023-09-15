@@ -22,6 +22,10 @@ class PostSerializer(serializers.ModelSerializer):
     menuItemCompositeIngredient = serializers.SerializerMethodField()
     menuItemNutritionFacts = serializers.SerializerMethodField()
     businessId = serializers.SerializerMethodField()
+    postCommentCount = serializers.SerializerMethodField()
+    postSaveCount = serializers.SerializerMethodField()
+    postShareCount = serializers.SerializerMethodField()
+    isSaved = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
@@ -54,7 +58,10 @@ class PostSerializer(serializers.ModelSerializer):
             "menuItemCompositeIngredient",
             "menuItemNutritionFacts",
             "businessId",
-
+            "postCommentCount",
+            "postSaveCount",
+            "postShareCount",
+            "isSaved"
 
         ]
         read_only_fields = ["id", "userId", "postPublishDateTime", "isLiked"]
@@ -131,6 +138,25 @@ class PostSerializer(serializers.ModelSerializer):
             return menu_item.businessId
         except MenuItem.DoesNotExist:
             return None
+
+    def get_postCommentCount(self, obj):
+        return PostComment.objects.filter(post=obj).count()
+
+    def get_postSaveCount(self, obj):
+        return PostSave.objects.filter(post=obj).count()
+
+    def get_postShareCount(self, obj):
+        return PostShare.objects.filter(post=obj).count()
+
+    def get_isSaved(self, obj):
+        request = self.context.get("request", None)
+        if request:
+            user = request.user
+            postSave = PostSave.objects.filter(
+                post=obj, user=user).order_by("-savedDateTime").first()
+            if postSave:
+                return postSave.postIsSaved
+        return False
 
 class PostDistanceSerializer(PostSerializer):
     """Serializer for nearbyPostListView"""

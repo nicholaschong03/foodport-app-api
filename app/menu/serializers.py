@@ -18,6 +18,7 @@ class MenuItemSerializer(serializers.ModelSerializer):
     delicious_rating = serializers.SerializerMethodField()
     eat_again_rating = serializers.SerializerMethodField()
     worth_it_rating = serializers.SerializerMethodField()
+    menuItemTotalPostCount = serializers.SerializerMethodField()
     class Meta:
         model = MenuItem
         fields = ["id",
@@ -29,6 +30,7 @@ class MenuItemSerializer(serializers.ModelSerializer):
                   "delicious_rating",
                   "eat_again_rating",
                   "worth_it_rating",
+                  "menuItemTotalPostCount",
                   ]
 
     def get_post_photo_url(self, obj):
@@ -50,6 +52,12 @@ class MenuItemSerializer(serializers.ModelSerializer):
     def get_worth_it_rating(self, obj):
         avg_rating = Post.objects.filter(menuItemId=obj.id).aggregate(Avg('postRatingDelicious'))
         return avg_rating["postRatingDelicious__avg"]
+
+    def get_menuItemTotalPostCount(self, obj):
+        if obj.postId:
+            return len(obj.postId)
+        return 0
+
 
 
 class MenuItemDetailSerializer(MenuItemSerializer):
