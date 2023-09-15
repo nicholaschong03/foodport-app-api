@@ -231,6 +231,7 @@ class PostComment(models.Model):
     commentReplies = models.JSONField(blank=True, null=True, default=list)
     commentPublishLastUpdatedDateTime = models.DateTimeField(null=True, blank=True)
     commentPublishLocation = models.TextField(blank=True, null=True)
+    
 
 
 class PostShare(models.Model):

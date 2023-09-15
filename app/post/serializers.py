@@ -216,6 +216,7 @@ class PostCommentSerializer(serializers.ModelSerializer):
     postId = serializers.ReadOnlyField(source="post.id")
     postCommentId = serializers.ReadOnlyField(source="id")
     userName = serializers.SerializerMethodField(read_only=True)
+    userPhotoUrl = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = PostComment
@@ -231,6 +232,9 @@ class PostCommentSerializer(serializers.ModelSerializer):
             "commentReplies",
             "commentPublishLocation",
             "userName",
+            "commentPublishLastUpdatedDateTime",
+            "userPhotoUrl"
+
         ]
 
     def get_userName(self, obj):
@@ -238,6 +242,15 @@ class PostCommentSerializer(serializers.ModelSerializer):
         if username:
             return username
         return None
+
+    def get_userPhotoUrl(self, obj):
+        user = obj.user
+        if user and user.userProfilePictureUrl:
+            request = self.context.get("request")
+            photo_url = user.userProfilePictureUrl.url
+            return request.build_absolute_uri(photo_url)
+        return None
+
 
 class PostShareSerializer(serializers.ModelSerializer):
     sharedById = serializers.SerializerMethodField(read_only=True)
