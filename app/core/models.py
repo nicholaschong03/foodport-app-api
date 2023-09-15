@@ -230,8 +230,28 @@ class PostComment(models.Model):
     commentLikes = models.JSONField(blank=True, null=True, default=list)
     commentReplies = models.JSONField(blank=True, null=True, default=list)
     commentPublishLastUpdatedDateTime = models.DateTimeField(null=True, blank=True)
-    commentPublishLocation = models.TextField(blank=True, null=True)
-    
+    commentPublishLocation = models.JSONField(default=dict, null=True, blank=True)
+    commentLikeCount = models.IntegerField(default=0)
+
+
+class CommentLike(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="comment_likes")
+    comment = models.ForeignKey(PostComment, on_delete=models.CASCADE, related_name="likes")
+    isActive = models.BooleanField(default=True)
+    likeDateTime = models.DateTimeField(auto_now_add=True)
+    likeIpAddress = models.GenericIPAddressField(null=True, blank=True)
+    likeUserAgent = models.TextField(null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        comment = self.comment
+        like_count = CommentLike.objects.filter(comment=comment, isActive=True).count()
+        unlike_count = CommentLike.objects.filter(
+            comment=comment, isActive=False).count()
+        comment.commentLikeCount = like_count - unlike_count
+        comment.save()
+
+
 
 
 class PostShare(models.Model):

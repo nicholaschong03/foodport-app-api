@@ -3,7 +3,7 @@ Serializers for posts APIs
 """
 from rest_framework import serializers
 
-from core.models import Post, User, PostLike, PostSave, PostView, PostComment, Seller, PostShare, MenuItem
+from core.models import Post, User, PostLike, PostSave, PostView, PostComment, Seller, PostShare, MenuItem, CommentLike
 
 
 class PostSerializer(serializers.ModelSerializer):
@@ -176,6 +176,30 @@ class PostLikeSerializer(serializers.ModelSerializer):
     def get_postId(self, obj):
         return obj.post.id
 
+class CommentLikeSerializer(serializers.ModelSerializer):
+    userId = serializers.SerializerMethodField(read_only=True)
+    commentId = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = CommentLike
+        fields = [
+            "id",
+            "commentId",
+            "userId",
+            "comment",
+            "user",
+            "isActive",
+            "likeDateTime",
+            "likeIpAddress",
+            "likeUserAgent",
+        ]
+
+    def get_userId(self, obj):
+        return obj.user.id
+
+    def get_commentId(self, obj):
+        return obj.comment.id
+
 
 class PostSaveSerializer(serializers.ModelSerializer):
     userId = serializers.ReadOnlyField(source="user.id")
@@ -217,6 +241,7 @@ class PostCommentSerializer(serializers.ModelSerializer):
     postCommentId = serializers.ReadOnlyField(source="id")
     userName = serializers.SerializerMethodField(read_only=True)
     userPhotoUrl = serializers.SerializerMethodField(read_only=True)
+    isLiked = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = PostComment
@@ -233,7 +258,9 @@ class PostCommentSerializer(serializers.ModelSerializer):
             "commentPublishLocation",
             "userName",
             "commentPublishLastUpdatedDateTime",
-            "userPhotoUrl"
+            "userPhotoUrl",
+            "isLiked",
+            "commentLikeCount",
 
         ]
 
@@ -250,6 +277,17 @@ class PostCommentSerializer(serializers.ModelSerializer):
             photo_url = user.userProfilePictureUrl.url
             return request.build_absolute_uri(photo_url)
         return None
+
+    def get_isLiked(self, obj):
+        request = self.context.get("request", None)
+        if request:
+            user = request.user
+            commentLike = CommentLike.objects.filter(
+                comment=obj, user=user).order_by("-likeDateTime").first()
+            if commentLike:
+                return commentLike.isActive
+        return False
+
 
 
 class PostShareSerializer(serializers.ModelSerializer):
@@ -324,3 +362,5 @@ class UsersListSerializer(serializers.ModelSerializer):
         model = User
         fields = ["userId", "userUsername",
                   "userName", "userProfilePictureUrl"]
+
+

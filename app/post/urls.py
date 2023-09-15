@@ -19,6 +19,7 @@ app_name = "post"
 urlpatterns = [
     path("", include(router.urls)),
     path("like/post/<int:post_id>/", views.LikePostView.as_view(), name="like-post"),
+    path("like/comment/<int:postcomment_id>/", views.LikeCommentView.as_view(), name="like-comment"),
     path("view/post/<int:post_id>/", views.ViewPostView.as_view(), name = "view-post"),
     path("save/post/<int:post_id>/", views.SavePostView.as_view(), name="save-post"),
     path("share/post/<int:post_id>/<int:user_id>/", views.SharePostView.as_view(), name="share-post"),

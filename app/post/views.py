@@ -18,7 +18,7 @@ from PIL import Image
 from io import BytesIO
 from django.core.files import File
 
-from core.models import Post, PostLike, User, PostSave, PostView, PostComment, PostShare, Business
+from core.models import Post, PostLike, User, PostSave, PostView, PostComment, PostShare, Business, CommentLike
 from post import serializers
 
 from django.db import models
@@ -30,6 +30,9 @@ from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
+
+from ip2geotools.databases.noncommercial import DbIpCity
+
 
 channel_layer = get_channel_layer()
 
@@ -131,6 +134,51 @@ class LikePostView(generics.GenericAPIView):
         return Response(response_data, status=status.HTTP_200_OK)
 
 
+class LikeCommentView(generics.GenericAPIView):
+    """This view is for users to like a comment"""
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    serializer_class = serializers.CommentLikeSerializer
+
+    def post(self, request, *args, **kwargs):
+        comment_id = kwargs.get("postcomment_id")
+        try:
+            comment = PostComment.objects.get(pk=comment_id)
+        except PostComment.DoesNotExist:
+            return Response({"detail": "Comment not found"})
+        user = request.user
+        data = {
+            "user": user.id,
+            "comment": comment.id,
+            "likeIpAddress": request.META.get("REMOTE_ADDR"),
+            "likeUserAgent": request.META.get("HTTP_USER_AGENT"),
+        }
+        existing_like = CommentLike.objects.filter(
+            user=user, comment=comment).order_by("-likeDateTime").first()
+        if existing_like and existing_like.isActive == True:
+            data["isActive"] = False
+            response_data = {"isLiked": False}
+        else:
+            data["isActive"] = True
+            response_data = {"isLiked": False}
+
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(response_data, status=status.HTTP_200_OK)
+
+
+class CommentLikeListView(generics.ListAPIView):
+    serializer_class = serializers.CommentLikeSerializer
+    authentication_classess = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        """"This view should return a list of all the CommentLikes for the currently authenticated user"""
+        comment_id = self.kwargs["postcomment_id"]
+        return PostComment.objects.filter(comment_id=comment_id).order_by
+
+
 class PostLikedUsersListView(generics.ListAPIView):
     serializer_class = serializers.UsersListSerializer
     authentication_classes = [TokenAuthentication]
@@ -176,7 +224,8 @@ class UserlikedPostsListView(generics.ListAPIView):
             return Post.objects.none()
 
         # Create a dictionary with post id as key and like date time as value
-        liked_posts_dict = {post_like["post"]: post_like["max_likeDateTime"] for post_like in post_likes}
+        liked_posts_dict = {
+            post_like["post"]: post_like["max_likeDateTime"] for post_like in post_likes}
 
         # Get the list of post ids
         liked_posts_ids = list(liked_posts_dict.keys())
@@ -273,12 +322,28 @@ class CretePostCommentView(generics.CreateAPIView):
             post = Post.objects.get(pk=post_id)
         except Post.DoesNotExist:
             return Response({"detail": "Post not found"})
+
+        x_forwarded_for = self.request.META.get("HTTP_X_FORWARDED_FOR")
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = self.request.META.get("REMOTE_ADDR")
+
+        try:
+            response = DbIpCity.get(ip, api_key="free")
+            location = {
+                "state": response.region,
+                "country": response.country
+            }
+        except Exception as e:
+            location = "Location unavailable"
+
         serializer.save(
             user=self.request.user,
             post=post,
             commentPublishIpAddress=self.request.META.get("REMOTE_ADDR"),
-            commentUserAgent=self.request.META.get("HTTP_USER_AGENT")
-
+            commentUserAgent=self.request.META.get("HTTP_USER_AGENT"),
+            commentPublishLocation=location
         )
 
 
