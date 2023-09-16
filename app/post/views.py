@@ -331,10 +331,7 @@ class CretePostCommentView(generics.CreateAPIView):
 
         try:
             response = DbIpCity.get(ip, api_key="free")
-            location = {
-                "state": response.region,
-                "country": response.country
-            }
+            location = response.country
         except Exception as e:
             location = "Location unavailable"
 
