@@ -13,6 +13,9 @@ class BusinessSerializer(serializers.ModelSerializer):
     worth_it_rating = serializers.SerializerMethodField()
     lowest_price = serializers.SerializerMethodField()
     highest_price = serializers.SerializerMethodField()
+    businessTotalPostCount = serializers.SerializerMethodField()
+    businessFollowerCount = serializers.SerializerMethodField()
+    businessFollowerId = serializers.SerializerMethodField()
 
     class Meta:
         model = Business
@@ -27,8 +30,10 @@ class BusinessSerializer(serializers.ModelSerializer):
                   "highest_price",
                   "businessOperatingLocation",
                   "businessOperatingLatitude",
-                  "businessOperatingLongitude"
-
+                  "businessOperatingLongitude",
+                  "businessTotalPostCount",
+                  "businessFollowerCount",
+                  "businessFollowerId",
                   ]
 
 
@@ -79,6 +84,18 @@ class BusinessSerializer(serializers.ModelSerializer):
     def get_highest_price(self, obj):
         max_price = MenuItem.objects.filter(businessId=obj.id).aggregate(Max("price"))
         return max_price["price__max"]
+
+    def get_businessTotalPostCount(self, obj):
+        menu_item_ids = obj.get_all_menu_item_ids()
+        total_post_count = Post.objects.filter(menuItemId__in=menu_item_ids).count()
+        return total_post_count
+
+    def get_businessFollowerCount(self, obj):
+        return obj.followers.count()
+
+    def get_businessFollowerId(self, obj):
+        return [follower.id for follower in obj.followers.all()]
+
 
 
 

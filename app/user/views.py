@@ -13,6 +13,7 @@ from django.http import Http404, JsonResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
 from user.serializer import UserSerializer, AuthTokenSerializer, UserProfileImageSerializer, UsersListSerializer, UserProfileCoverSerializer
+from business.serializers import BusinessSerializer
 from core.models import User
 from rest_framework import status
 from django.conf import settings
@@ -359,7 +360,7 @@ class FollowingListView(generics.ListAPIView):
 class FriendsListView(generics.ListAPIView):
     serializer_class = UsersListSerializer
     authentication_classes = [authentication.TokenAuthentication]
-    permissions_calsses = [permissions.IsAuthenticated]
+    permission_calsses = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         user_id = self.kwargs["user_id"]
@@ -368,3 +369,6 @@ class FriendsListView(generics.ListAPIView):
         except User.DoesNotExist:
             raise Http404("User not found")
         return user.get_friends()
+
+
+

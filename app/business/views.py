@@ -1,7 +1,8 @@
 from rest_framework import viewsets, status, permissions, authentication, generics
 from rest_framework.response import Response
-from core.models import Business, Post, MenuItem, PostLike
+from core.models import Business, Post, MenuItem, PostLike, User
 from business.serializers import BusinessSerializer, BusinessDetailSerializer
+from user.serializer import UserSerializer
 from django.utils import timezone
 from rest_framework import filters
 from rest_framework.views import APIView
@@ -232,3 +233,48 @@ class DailyCumulativePostLikesView(APIView):
 
         # Return the result
         return Response(results)
+
+class FollowBusinessView(APIView):
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, business_id):
+        try:
+            business_to_follow = Business.objects.get(id=business_id)
+        except Business.DoesNotExist:
+            return Response({"error": "Business not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if business_to_follow in request.user.following_businesses.all():
+            request.user.following_businesses.remove(business_to_follow)
+            return Response({"status": "unfollowed"}, status=status.HTTP_200_OK)
+        else:
+            request.user.following_businesses.add(business_to_follow)
+            return Response({"status": "followed"}, status=status.HTTP_200_OK)
+
+class BusinessFollowersListView(generics.ListAPIView):
+    serializer_class = UserSerializer
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        business_id = self.kwargs["business_id"]
+        try:
+            business = Business.objects.get(id=business_id)
+        except Business.DoesNotExist:
+            raise Http404("User not found")
+        return business.followers.all()
+
+class FollowingBusinessesListView(generics.ListAPIView):
+    serializer_class = BusinessSerializer
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user_id = self.kwargs["user_id"]
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            raise Http404("User not found")
+        return user.following_businesses.all()
+
+

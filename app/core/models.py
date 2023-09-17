@@ -297,9 +297,16 @@ class Business(models.Model):
     menuItemId = models.JSONField(blank=True, null=True, default=list)
     businessOperatingLatitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     businessOperatingLongitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    businessTrendRanking = models.IntegerField(null=True, blank=True)
+    followers = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, related_name="following_businesses", blank=True
+    )
 
     def __str__(self):
         return self.businessName
+
+    def get_all_menu_item_ids(self):
+        return self.menuItemId or []
 
 
 
