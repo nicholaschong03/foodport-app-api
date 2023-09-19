@@ -446,11 +446,17 @@ class NearbyPostsListView(generics.ListAPIView):
         # Calculate the distance and add as an attribute to each post
         for post in posts:
             try:
-                business = post.menuItem.business
-                business_location = (
-                    business.businessOperatingLatitude, business.businessOperatingLongitude)
-                post.distance = geodesic(
-                    user_location, business_location).kilometers
+                if post.menuItem and post.menuItem.business:
+                    business = post.menuItem.business
+                    if business.businessOperatingLatitude and business.businessOperatingLongitude:
+                        business_location = (
+                            business.businessOperatingLatitude, business.businessOperatingLongitude)
+                        post.distance = geodesic(
+                            user_location, business_location).kilometers
+                    else:
+                        post.distance =9999
+                else:
+                    post.distance = 9999
 
             except Business.DoesNotExist:
                 # If business does not exist, set a high distance value
