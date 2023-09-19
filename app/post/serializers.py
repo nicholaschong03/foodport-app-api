@@ -3,7 +3,7 @@ Serializers for posts APIs
 """
 from rest_framework import serializers
 
-from core.models import Post, User, PostLike, PostSave, PostView, PostComment, Seller, PostShare, MenuItem, CommentLike
+from core.models import Post, User, PostLike, PostSave, PostView, PostComment, Business, PostShare, MenuItem, CommentLike
 
 
 class PostSerializer(serializers.ModelSerializer):
@@ -15,7 +15,7 @@ class PostSerializer(serializers.ModelSerializer):
     postLikeCount = serializers.SerializerMethodField()
     isLiked = serializers.SerializerMethodField()
     userProfilePictureUrl = serializers.SerializerMethodField()
-    sellerOperatingLocation = serializers.SerializerMethodField()
+    businessOperatingLocation = serializers.SerializerMethodField()
     userUsername = serializers.ReadOnlyField(source="user.userUsername")
     menuItemName = serializers.SerializerMethodField()
     menuItemBasicIngredient = serializers.SerializerMethodField()
@@ -38,7 +38,6 @@ class PostSerializer(serializers.ModelSerializer):
             "postRatingEatAgain",
             "postRatingWorthIt",
             "postPhotoUrl",
-            "menuItemId",
             "postPublishIpAddress",
             "postView",
             "postLikeCount",
@@ -51,7 +50,7 @@ class PostSerializer(serializers.ModelSerializer):
             "postShare",
             "isLiked",
             "userProfilePictureUrl",
-            "sellerOperatingLocation",
+            "businessOperatingLocation",
             "userUsername",
             "menuItemName",
             "menuItemBasicIngredient",
@@ -61,7 +60,8 @@ class PostSerializer(serializers.ModelSerializer):
             "postCommentCount",
             "postSaveCount",
             "postShareCount",
-            "isSaved"
+            "isSaved",
+            "menuItem",
 
         ]
         read_only_fields = ["id", "userId", "postPublishDateTime", "isLiked"]
@@ -96,47 +96,47 @@ class PostSerializer(serializers.ModelSerializer):
             return request.build_absolute_uri(photo_url)
         return None
 
-    def get_sellerOperatingLocation(self, obj):
-        menu_id = obj.menuItemId
-        seller_instance = Seller.objects.filter(menuItemId=menu_id)
-
-        if seller_instance:
-            return seller_instance.sellerOperatingLocation
-        return None
+    def get_businessOperatingLocation(self, obj):
+        try:
+            business_instance = obj.menuItem.business
+            if business_instance:
+                return business_instance.businessOperatingLocation
+        except AttributeError:
+            return None
 
     def get_menuItemName(self, obj):
         try:
-            menu_item = MenuItem.objects.get(id=obj.menuItemId)
+            menu_item = obj.menuItem
             return menu_item.name
-        except MenuItem.DoesNotExist:
+        except AttributeError:
             return None
 
     def get_menuItemBasicIngredient(self, obj):
         try:
-            menu_item = MenuItem.objects.get(id=obj.menuItemId)
+            menu_item = obj.menuItem
             return menu_item.basicIngredient
-        except MenuItem.DoesNotExist:
+        except AttributeError:
             return None
 
     def get_menuItemCompositeIngredient(self, obj):
         try:
-            menu_item = MenuItem.objects.get(id=obj.menuItemId)
+            menu_item = obj.menuItem
             return menu_item.compositeIngredient
-        except MenuItem.DoesNotExist:
+        except AttributeError:
             return None
 
     def get_menuItemNutritionFacts(self, obj):
         try:
-            menu_item = MenuItem.objects.get(id=obj.menuItemId)
+            menu_item = obj.menuItem
             return menu_item.nutritionFacts
-        except MenuItem.DoesNotExist:
+        except AttributeError:
             return None
 
     def get_businessId(self, obj):
         try:
-            menu_item = MenuItem.objects.get(id=obj.menuItemId)
-            return menu_item.businessId
-        except MenuItem.DoesNotExist:
+            menu_item = obj.menuItem
+            return menu_item.business.id
+        except AttributeError:
             return None
 
     def get_postCommentCount(self, obj):

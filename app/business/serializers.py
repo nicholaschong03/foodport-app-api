@@ -16,6 +16,7 @@ class BusinessSerializer(serializers.ModelSerializer):
     businessTotalPostCount = serializers.SerializerMethodField()
     businessFollowerCount = serializers.SerializerMethodField()
     businessFollowerId = serializers.SerializerMethodField()
+    postId = serializers.SerializerMethodField()
 
     class Meta:
         model = Business
@@ -34,23 +35,31 @@ class BusinessSerializer(serializers.ModelSerializer):
                   "businessTotalPostCount",
                   "businessFollowerCount",
                   "businessFollowerId",
+                  "postId",
                   ]
 
 
 
     def get_post_photo_url(self, obj):
-       for menuId in obj.menuItemId:
-           post = Post.objects.filter(menuItemId=menuId).order_by("-postLikeCount").first()
-           if post and post.postPhotoUrl:
-                request = self.context.get("request")
-                photo_url = post.postPhotoUrl.url
-                return request.build_absolute_uri(photo_url)
-       return None
+        menu_items = obj.menu_items.all()
+        posts = [menu_item.posts.order_by("-postLikeCount").first() for menu_item in menu_items]
+        posts = [post for post in posts if post]
+
+        post = None
+        if posts:
+            post = max(posts, key=lambda post: post.postLikeCount)
+
+        if post and post.postPhotoUrl:
+            request = self.context.get("request")
+            photo_url = post.postPhotoUrl.url
+            return request.build_absolute_uri(photo_url)
+        return None
 
     def get_delicious_rating(self, obj):
+        menu_items = obj.menu_items.all()
         ratings = []
-        for menuId in obj.menuItemId:
-            avg_rating = Post.objects.filter(menuItemId=menuId).aggregate(Avg("postRatingDelicious"))
+        for menu_item in menu_items:
+            avg_rating = menu_item.posts.aggregate(Avg("postRatingDelicious"))
             if avg_rating["postRatingDelicious__avg"] is not None:
                 ratings.append(avg_rating["postRatingDelicious__avg"])
         if ratings:
@@ -58,9 +67,10 @@ class BusinessSerializer(serializers.ModelSerializer):
         return None
 
     def get_eat_again_rating(self, obj):
+        menu_items = obj.menu_items.all()
         ratings = []
-        for menuId in obj.menuItemId:
-            avg_rating = Post.objects.filter(menuItemId=menuId).aggregate(Avg("postRatingEatAgain"))
+        for menu_item in menu_items:
+            avg_rating = menu_item.posts.aggregate(Avg("postRatingEatAgain"))
             if avg_rating["postRatingEatAgain__avg"] is not None:
                 ratings.append(avg_rating["postRatingEatAgain__avg"])
         if ratings:
@@ -68,9 +78,10 @@ class BusinessSerializer(serializers.ModelSerializer):
         return None
 
     def get_worth_it_rating(self, obj):
+        menu_items = obj.menu_items.all()
         ratings = []
-        for menuId in obj.menuItemId:
-            avg_rating = Post.objects.filter(menuItemId=menuId).aggregate(Avg("postRatingWorthIt"))
+        for menu_item in menu_items:
+            avg_rating = menu_item.posts.aggregate(Avg("postRatingWorthIt"))
             if avg_rating["postRatingWorthIt__avg"] is not None:
                 ratings.append(avg_rating["postRatingWorthIt__avg"])
         if ratings:
@@ -78,23 +89,32 @@ class BusinessSerializer(serializers.ModelSerializer):
         return None
 
     def get_lowest_price(self, obj):
-        min_price = MenuItem.objects.filter(businessId=obj.id).aggregate(Min("price"))
+        min_price = obj.menu_items.aggregate(Min("price"))
         return min_price["price__min"]
 
     def get_highest_price(self, obj):
-        max_price = MenuItem.objects.filter(businessId=obj.id).aggregate(Max("price"))
+        max_price = obj.menu_items.aggregate(Max("price"))
         return max_price["price__max"]
 
     def get_businessTotalPostCount(self, obj):
-        menu_item_ids = obj.get_all_menu_item_ids()
-        total_post_count = Post.objects.filter(menuItemId__in=menu_item_ids).count()
+        menu_items = obj.menu_items.all()
+        total_post_count = sum(menu_item.posts.count() for menu_item in menu_items)
         return total_post_count
+
 
     def get_businessFollowerCount(self, obj):
         return obj.followers.count()
 
     def get_businessFollowerId(self, obj):
         return [follower.id for follower in obj.followers.all()]
+
+    def get_postId(self, obj):
+        post_ids = []
+        menu_items = obj.menu_items.all()
+        for menu_item in menu_items:
+            post_ids.extend(menu_item.posts.values_list("id", flat=True))
+
+        return post_ids
 
 
 
@@ -110,7 +130,6 @@ class BusinessDetailSerializer(BusinessSerializer):
                   "businessSafeFood",
                   "businessHalal",
                   "businessInfoContributor",
-                  "menuItemId",
                   "sellerId",
         ]
 

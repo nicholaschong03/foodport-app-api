@@ -403,7 +403,7 @@ class SearchFilterPostsView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
 
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ["menuItemId", "user"]
+    filterset_fields = ["menuItem", "user"]
     pagination_class = CustomPostPagination
     queryset = Post.objects.all().order_by("postPublishDateTime")
 
@@ -431,7 +431,7 @@ class NearbyPostsListView(generics.ListAPIView):
     permission_classess = [IsAuthenticated]
 
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ["menuItemId", "user"]
+    filterset_fields = ["menuItem", "user"]
     pagination_class = CustomPostPagination
 
     def get_queryset(self):
@@ -446,7 +446,7 @@ class NearbyPostsListView(generics.ListAPIView):
         # Calculate the distance and add as an attribute to each post
         for post in posts:
             try:
-                business = Business.objects.get(menuItemId=post.menuItemId)
+                business = post.menuItem.business
                 business_location = (
                     business.businessOperatingLatitude, business.businessOperatingLongitude)
                 post.distance = geodesic(
@@ -480,7 +480,7 @@ class ReturnRatingReviewPostsView(generics.ListAPIView):
     queryset = Post.objects.all().order_by("-postRatingEatAgain",
                                            "-postRatingWorthIt", "-postRatingDelicious")
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ["menuItemId"]
+    filterset_fields = ["menuItem"]
     pagination_class = CustomPostPagination
 
 
@@ -491,7 +491,7 @@ class ReturnHighestEatAgainRatingReview(generics.ListAPIView):
 
     queryset = Post.objects.all().order_by("-postRatingEatAgain")
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ["menuItemId"]
+    filterset_fields = ["menuItem"]
     pagination_class = CustomPostPagination
 
 
@@ -502,7 +502,7 @@ class ReturnHighestWorthItRatingReview(generics.ListAPIView):
 
     queryset = Post.objects.all().order_by("-postRatingWorthIt")
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ["menuItemId"]
+    filterset_fields = ["menuItem"]
     pagination_class = CustomPostPagination
 
 
@@ -513,7 +513,7 @@ class ReturnHighestDeliciousRatinReview(generics.ListAPIView):
 
     queryset = Post.objects.all().order_by("-postRatingDelicious")
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ["menuItemId"]
+    filterset_fields = ["menuItem"]
     pagination_class = CustomPostPagination
 
 

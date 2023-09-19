@@ -140,6 +140,63 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = "userEmailAddress"
 
 
+class Business(models.Model):
+    "Business object"
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+    businessName = models.CharField(max_length=255)
+    businessOperatingLocation = models.JSONField(null=True, blank=True)
+    businessOperatingTime = models.JSONField(null=True, blank=True)
+    businessVerified = models.BooleanField(default=False)
+    businessSafeFood = models.BooleanField(default=False)
+    businessHalal = models.BooleanField(default=False)
+    sellerId = models.IntegerField(null=True, blank=True)
+    businessInfoContributor = models.JSONField(null=True, blank=True)
+    businessOperatingLatitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    businessOperatingLongitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    businessTrendRanking = models.IntegerField(null=True, blank=True)
+    followers = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, related_name="following_businesses", blank=True
+    )
+
+    def __str__(self):
+        return self.businessName
+
+    # def get_all_menu_item_ids(self):
+    #     return self.menuItemId or []
+
+class MenuItem(models.Model):
+    """Menu object"""
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        null=True
+    )
+    name = models.CharField(max_length=255)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    dishInfoContributor = models.JSONField(default=dict, blank=True, null=True)
+    sellerId = models.IntegerField(null=True, blank=True)
+    business = models.ForeignKey(Business, on_delete=models.SET_NULL, null=True, blank=True, related_name="menu_items")
+    category = models.CharField(max_length=255)
+
+    basicIngredient = models.JSONField(default=list, blank=True, null=True)
+    compositeIngredient = models.JSONField(default=list, blank=True, null=True)
+    nutritionFacts = models.JSONField(default=dict, blank=True, null=True)
+    # menuItemTotalPostCount = models.IntegerField(default=0)
+
+    trendingPosition = models.IntegerField(null=True, blank=True)
+    trendingDirection = models.CharField(max_length=255, null=True, blank=True)
+
+    # def update_post_count(self):
+    #     self.menuItemTotalPostCount = self.posts.count()
+    #     self.save()
+
+    def __str__(self):
+        return self.name
+
+
 class Post(models.Model):
     """Post object."""
     user = models.ForeignKey(
@@ -162,7 +219,6 @@ class Post(models.Model):
         blank=False,
         error_messages={"blank": "Please provide a rating from 1 to 5"})
     postPublishIpAddress = models.GenericIPAddressField(null=True, blank=True)
-    menuItemId = models.IntegerField(null=True, blank=True, default=0)
     postPhotoUrl = models.ImageField(null=True, upload_to=post_image_file_path)
 
     postView = models.JSONField(default=dict, blank=True)
@@ -173,6 +229,19 @@ class Post(models.Model):
     postDishSellerVisit = models.JSONField(default=dict, blank=True)
     postDishVisit = models.JSONField(default=dict, blank=True)
     postLikeCount = models.IntegerField(default=0)
+    menuItem = models.ForeignKey(MenuItem, null=True, blank=True, related_name="posts", on_delete=models.SET_NULL)
+
+    # def save(self, *args, **kwargs):
+    #     menu_item = self.menuItem
+    #     super().save(*args, **kwargs)
+    #     if menu_item:
+    #         menu_item.update_post_count()
+
+    # def delete(self, *args, **kwargs):
+    #     menu_item = self.menuItem
+    #     super().delete(*args, **kwargs)
+    #     if menu_item:
+    #         menu_item.update_post_count()
 
     def __str__(self):
         return self.postReview
@@ -280,33 +349,7 @@ class Seller(models.Model):
     def __str__(self):
         return self.sellerBusinessName
 
-class Business(models.Model):
-    "Business object"
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-    )
-    businessName = models.CharField(max_length=255)
-    businessOperatingLocation = models.JSONField(null=True, blank=True)
-    businessOperatingTime = models.JSONField(null=True, blank=True)
-    businessVerified = models.BooleanField(default=False)
-    businessSafeFood = models.BooleanField(default=False)
-    businessHalal = models.BooleanField(default=False)
-    sellerId = models.IntegerField(null=True, blank=True)
-    businessInfoContributor = models.JSONField(null=True, blank=True)
-    menuItemId = models.JSONField(blank=True, null=True, default=list)
-    businessOperatingLatitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
-    businessOperatingLongitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
-    businessTrendRanking = models.IntegerField(null=True, blank=True)
-    followers = models.ManyToManyField(
-        settings.AUTH_USER_MODEL, related_name="following_businesses", blank=True
-    )
 
-    def __str__(self):
-        return self.businessName
-
-    def get_all_menu_item_ids(self):
-        return self.menuItemId or []
 
 
 
@@ -331,28 +374,4 @@ class Dish(models.Model):
     dishInfoContributor = models.JSONField(default=dict, blank=True)
 
 
-class MenuItem(models.Model):
-    """Menu object"""
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        null=True
-    )
-    name = models.CharField(max_length=255)
-    price = models.DecimalField(max_digits=10, decimal_places=2)
-    postId = models.JSONField(null=True, blank=True, default=list)
-    dishInfoContributor = models.JSONField(default=dict, blank=True, null=True)
-    sellerId = models.IntegerField(null=True, blank=True)
-    businessId = models.IntegerField(null=True, blank=True)
-    category = models.CharField(max_length=255)
 
-    basicIngredient = models.JSONField(default=list, blank=True, null=True)
-    compositeIngredient = models.JSONField(default=list, blank=True, null=True)
-    nutritionFacts = models.JSONField(default=dict, blank=True, null=True)
-    totalPostCount = models.IntegerField(default=0)
-
-    trendingPosition = models.IntegerField(null=True, blank=True)
-    trendingDirection = models.CharField(max_length=255, null=True, blank=True)
-
-    def __str__(self):
-        return self.name

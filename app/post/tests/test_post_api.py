@@ -15,7 +15,7 @@ from geopy.distance import geodesic
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from core.models import Post, PostLike, PostSave, PostView, PostComment, PostShare, Business
+from core.models import Post, PostLike, PostSave, PostView, PostComment, PostShare, Business, MenuItem
 
 from post.serializers import PostSerializer, PostDetailSerializer
 
@@ -407,13 +407,19 @@ class PrivatePostApiTests(TestCase):
                                password="test123",
                                userPhoneNumber="0123456789",
                                userUsername="username2", )
-        create_post(user=new_user, menuItemId=1)
-        create_post(user=new_user, menuItemId=2)
 
         business = Business.objects.create(
-            user=new_user, menuItemId=1, businessOperatingLatitude=40.730610, businessOperatingLongitude=-73.935242)
+            user=new_user, businessOperatingLatitude=40.730610, businessOperatingLongitude=-73.935242)
         business2 = Business.objects.create(
-            user=new_user, menuItemId=2, businessOperatingLatitude=40.659104, businessOperatingLongitude=-73.960484)
+            user=new_user, businessOperatingLatitude=40.659104, businessOperatingLongitude=-73.960484)
+
+        business1_menu_item = MenuItem.objects.create(
+            name="Item1", business=business, price = 12.50)
+        business2_menu_item = MenuItem.objects.create(
+            name="Item2", business=business2, price = 12.50)
+
+        create_post(user=new_user, menuItem=business1_menu_item)
+        create_post(user=new_user, menuItem=business2_menu_item)
 
         url = reverse("post:nearby-post-feed")
 
@@ -460,13 +466,19 @@ class PrivatePostApiTests(TestCase):
             userUsername="username2"
         )
 
+        business1 = Business.objects.create(user=user1, businessName="Business 1")
+        business2 = Business.objects.create(user=user2, businessName="Business 2")
+
+        menu_item1 = MenuItem.objects.create(name="Food Item 1", category="Food", business=business1, price = 12.50)
+        menu_item2 = MenuItem.objects.create(name="Food Item 2", category="Food", business=business2, price = 12.50)
+
         create_post(
             user=user1,
             postReview="very delicious",
             postRatingDelicious=5,
             postRatingEatAgain=3,
             postRatingWorthIt=2,
-            menuItemId=1
+            menuItem=menu_item1
 
         )
 
@@ -476,7 +488,7 @@ class PrivatePostApiTests(TestCase):
             postRatingDelicious=5,
             postRatingEatAgain=3,
             postRatingWorthIt=2,
-            menuItemId=1
+            menuItem=menu_item1
 
         )
 
@@ -486,13 +498,12 @@ class PrivatePostApiTests(TestCase):
             postRatingDelicious=5,
             postRatingEatAgain=3,
             postRatingWorthIt=2,
-            menuItemId=2
+            menuItem=menu_item2
 
         )
 
-        # perform get request with filter on menuItemId= 1
         url = reverse("post:for-you-post-feed")
-        res = self.client.get(url, {"menuItemId": 1})
+        res = self.client.get(url, {"menuItem": menu_item1.id})
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
 
@@ -500,13 +511,34 @@ class PrivatePostApiTests(TestCase):
 
     def test_return_rating_review(self):
 
+        user1 = create_user(
+        userEmailAddress="user1@example.com",
+        password="test123",
+        userPhoneNumber="0123456843",
+        userUsername="username1"
+        )
+        user2 = create_user(
+            userEmailAddress="user2@example.com",
+            password="password123",
+            userPhoneNumber="+60123456789",
+            userUsername="username2"
+        )
+
+
+        business1 = Business.objects.create(user=user1, businessName="Business 1")
+        business2 = Business.objects.create(user=user2, businessName="Business 2")
+
+        menu_item1 = MenuItem.objects.create(name="Food Item 1", category="Food", price = 12.50, business=business1)
+        menu_item2 = MenuItem.objects.create(name="Food Item 2", category="Food", price = 12.50, business=business2)
+
+
         post1 = create_post(
             user=self.user,
             postReview="fucking bad",
             postRatingDelicious=4.5,
             postRatingEatAgain=4.2,
             postRatingWorthIt=4.8,
-            menuItemId=1
+            menuItem=menu_item1
 
         )
 
@@ -516,7 +548,7 @@ class PrivatePostApiTests(TestCase):
             postRatingDelicious=3.8,
             postRatingEatAgain=4.5,
             postRatingWorthIt=4.0,
-            menuItemId=1
+            menuItem=menu_item1
 
         )
 
@@ -526,7 +558,7 @@ class PrivatePostApiTests(TestCase):
             postRatingDelicious=4.2,
             postRatingEatAgain=4.0,
             postRatingWorthIt=4.3,
-            menuItemId=2
+            menuItem=menu_item2
 
         )
 

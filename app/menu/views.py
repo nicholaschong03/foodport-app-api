@@ -43,11 +43,11 @@ class MenuItemListView(generics.ListAPIView):
     """Return a list of menu filtered by menu item Name and seach query"""
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [authentication.TokenAuthentication]
-    serializer_class = MenuItemSerializer
+    serializer_class = MenuItemDetailSerializer
 
     queryset = MenuItem.objects.all().order_by("name")
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ["category", "businessId"]
+    filterset_fields = ["category", "business"]
     search_fields = ["name"]
     pagination_class = CustomMenuItemPagination
 
@@ -69,7 +69,7 @@ class AllMenuItemListView(generics.ListAPIView):
     """Return a list of all existing menu items"""
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
-    serializer_class = MenuItemSerializer
+    serializer_class = MenuItemDetailSerializer
 
     def get_queryset(self):
         """Retrieve all the menu items"""

@@ -58,7 +58,7 @@ class CustomBusinessPagination(PageNumberPagination):
 
 class BusinessListView(generics.ListAPIView):
     queryset = Business.objects.all().order_by("businessName")
-    serializer_class = BusinessSerializer
+    serializer_class = BusinessDetailSerializer
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
@@ -85,7 +85,7 @@ class AllBusinessesListView(generics.ListAPIView):
     """Return a list of all existing menu items"""
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
-    serializer_class = BusinessSerializer
+    serializer_class = BusinessDetailSerializer
 
     def get_queryset(self):
         """Retrieve all the menu items"""
@@ -121,11 +121,8 @@ class LikePercentageChangeView(APIView):
                              "startDate": startDateTime,
                              "businessId": businessId}, status=400,)
 
-        # Get the business' menu items
-        menu_items = MenuItem.objects.filter(id__in=business.menuItemId)
 
-        # Get posts associated with business' menu items
-        posts = Post.objects.filter(menuItemId__in=menu_items)
+        posts = Post.objects.filter(menu_item__in=business.menu_items.all())
 
         # Calcualte likes at startDateTime and endDateTie
         start_likes = posts.filter(postPublishDateTime__lte=startDateTime).aggregate(
@@ -189,11 +186,8 @@ class DailyCumulativePostLikesView(APIView):
                              "startDate": startDateTime,
                              "businessId": businessId}, status=400,)
 
-        # Get the business' menu items
-        menu_items = MenuItem.objects.filter(id__in=business.menuItemId)
 
-        # Get posts associated with business' menu items
-        posts = Post.objects.filter(menuItemId__in=menu_items)
+        posts = Post.objects.filter(menu_item__in=business.menu_items.all())
 
         # Initialize the result list
         results = []
@@ -265,7 +259,7 @@ class BusinessFollowersListView(generics.ListAPIView):
         return business.followers.all()
 
 class FollowingBusinessesListView(generics.ListAPIView):
-    serializer_class = BusinessSerializer
+    serializer_class = BusinessDetailSerializer
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
