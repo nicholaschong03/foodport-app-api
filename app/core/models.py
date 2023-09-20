@@ -19,6 +19,7 @@ from django.contrib.auth.models import (
 
 from imagekit.models import ImageSpecField
 from imagekit.processors import ResizeToFill
+from imagekit.processors import Adjust
 
 
 def post_image_file_path(instance, filename):
@@ -220,6 +221,10 @@ class Post(models.Model):
         error_messages={"blank": "Please provide a rating from 1 to 5"})
     postPublishIpAddress = models.GenericIPAddressField(null=True, blank=True)
     postPhotoUrl = models.ImageField(null=True, upload_to=post_image_file_path)
+    optimized_image = ImageSpecField(source="postPhotoUrl",
+                                     processors=[ResizeToFill(800,800)],
+                                     format="JPEG",
+                                     options={"quality": 85})
 
     postView = models.JSONField(default=dict, blank=True)
     postComment = models.JSONField(default=dict, blank=True)
@@ -230,18 +235,6 @@ class Post(models.Model):
     postDishVisit = models.JSONField(default=dict, blank=True)
     postLikeCount = models.IntegerField(default=0)
     menuItem = models.ForeignKey(MenuItem, null=True, blank=True, related_name="posts", on_delete=models.SET_NULL)
-
-    # def save(self, *args, **kwargs):
-    #     menu_item = self.menuItem
-    #     super().save(*args, **kwargs)
-    #     if menu_item:
-    #         menu_item.update_post_count()
-
-    # def delete(self, *args, **kwargs):
-    #     menu_item = self.menuItem
-    #     super().delete(*args, **kwargs)
-    #     if menu_item:
-    #         menu_item.update_post_count()
 
     def __str__(self):
         return self.postReview

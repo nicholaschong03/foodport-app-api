@@ -26,7 +26,7 @@ class PostSerializer(serializers.ModelSerializer):
     postSaveCount = serializers.SerializerMethodField()
     postShareCount = serializers.SerializerMethodField()
     isSaved = serializers.SerializerMethodField()
-
+    optimized_post_photo_url = serializers.SerializerMethodField()
     class Meta:
         model = Post
         fields = [
@@ -38,6 +38,7 @@ class PostSerializer(serializers.ModelSerializer):
             "postRatingEatAgain",
             "postRatingWorthIt",
             "postPhotoUrl",
+            "optimized_post_photo_url",
             "postPublishIpAddress",
             "postView",
             "postLikeCount",
@@ -157,6 +158,11 @@ class PostSerializer(serializers.ModelSerializer):
             if postSave:
                 return postSave.postIsSaved
         return False
+
+    def get_optimized_post_photo_url(self, obj):
+        if obj.optimized_image:
+            request = self.context.get("request")
+            return request.build_absolute_uri(obj.optimized_image.url)
 
 class PostDistanceSerializer(PostSerializer):
     """Serializer for nearbyPostListView"""
