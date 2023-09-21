@@ -186,69 +186,69 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     #     super().save(*args, **kwargs)
 
-    def save(self, *args, **kwargs):
-        # Store the old image paths before saving the new images
-        if self.pk:
-            old_instance = User.objects.get(pk=self.pk)
-            old_profile_pic_path = old_instance.userProfilePictureUrl.path if old_instance.userProfilePictureUrl else None
-            old_cover_pic_path = old_instance.userCoverPictureUrl.path if old_instance.userCoverPictureUrl else None
-        else:
-            old_profile_pic_path = None
-            old_cover_pic_path = None
+    # # def save(self, *args, **kwargs):
+    # #     # Store the old image paths before saving the new images
+    # #     if self.pk:
+    # #         old_instance = User.objects.get(pk=self.pk)
+    # #         old_profile_pic_path = old_instance.userProfilePictureUrl.path if old_instance.userProfilePictureUrl else None
+    # #         old_cover_pic_path = old_instance.userCoverPictureUrl.path if old_instance.userCoverPictureUrl else None
+    # #     else:
+    # #         old_profile_pic_path = None
+    # #         old_cover_pic_path = None
 
-        profile_pic_modified = False
-        cover_pic_modified = False
+    # #     profile_pic_modified = False
+    # #     cover_pic_modified = False
 
-        if self.userProfilePictureUrl and hasattr(self.userProfilePictureUrl, 'file'):
-            # Open the image using Pillow
-            img = Image.open(self.userProfilePictureUrl)
+    # #     if self.userProfilePictureUrl and hasattr(self.userProfilePictureUrl, 'file'):
+    # #         # Open the image using Pillow
+    # #         img = Image.open(self.userProfilePictureUrl)
 
-            aspect_ratio = img.height / img.width
-            new_width = 1290
-            new_height = int(new_width * aspect_ratio)
+    # #         aspect_ratio = img.height / img.width
+    # #         new_width = 1290
+    # #         new_height = int(new_width * aspect_ratio)
 
-            # Resize the image.
-            img = img.resize((new_width, new_height), Image.ANTIALIAS)
+    # #         # Resize the image.
+    # #         img = img.resize((new_width, new_height), Image.ANTIALIAS)
 
-            # Save the image back to userProfilePictureUrl
-            buffer = BytesIO()
-            img.save(fp=buffer, format="JPEG", quality=85)
-            buffer.seek(0)
-            self.userProfilePictureUrl.save(
-                name=self.userProfilePictureUrl.name, content=ContentFile(buffer.read()), save=False)
+    # #         # Save the image back to userProfilePictureUrl
+    # #         buffer = BytesIO()
+    # #         img.save(fp=buffer, format="JPEG", quality=85)
+    # #         buffer.seek(0)
+    # #         self.userProfilePictureUrl.save(
+    # #             name=self.userProfilePictureUrl.name, content=ContentFile(buffer.read()), save=False)
 
-            profile_pic_modified = True
+    # #         profile_pic_modified = True
 
-        if self.userCoverPictureUrl and hasattr(self.userCoverPictureUrl, 'file'):
-            # Open the image using Pillow
-            img = Image.open(self.userProfilePictureUrl)
+    # #     if self.userCoverPictureUrl and hasattr(self.userCoverPictureUrl, 'file'):
+    # #         # Open the image using Pillow
+    # #         img = Image.open(self.userProfilePictureUrl)
 
-            aspect_ratio = img.height / img.width
-            new_width = 1290
-            new_height = int(new_width * aspect_ratio)
+    # #         aspect_ratio = img.height / img.width
+    # #         new_width = 1290
+    # #         new_height = int(new_width * aspect_ratio)
 
-            # Resize the image.
-            img = img.resize((new_width, new_height), Image.ANTIALIAS)
+    # #         # Resize the image.
+    # #         img = img.resize((new_width, new_height), Image.ANTIALIAS)
 
-            # Save the image back to userCoverPictureUrl
-            buffer = BytesIO()
-            img.save(fp=buffer, format="JPEG", quality=85)
-            buffer.seek(0)
-            self.userCoverPictureUrl.save(name=self.userCoverPictureUrl.name, content=ContentFile(
-                buffer.read()), save=False)  # Corrected this line
+    # #         # Save the image back to userCoverPictureUrl
+    # #         buffer = BytesIO()
+    # #         img.save(fp=buffer, format="JPEG", quality=85)
+    # #         buffer.seek(0)
+    # #         self.userCoverPictureUrl.save(name=self.userCoverPictureUrl.name, content=ContentFile(
+    # #             buffer.read()), save=False)  # Corrected this line
 
-            cover_pic_modified = True
+    # #         cover_pic_modified = True
 
-        # Call the "real" save() method once if any image field was modified
-        super(User, self).save(*args, **kwargs)
+    # #     # Call the "real" save() method once if any image field was modified
+    # #     super(User, self).save(*args, **kwargs)
 
-        # Delete the old image files from the filesystem
-        if old_profile_pic_path and profile_pic_modified:
-            if os.path.exists(old_profile_pic_path):
-                os.remove(old_profile_pic_path)
-        if old_cover_pic_path and cover_pic_modified:
-            if os.path.exists(old_cover_pic_path):
-                os.remove(old_cover_pic_path)
+    # #     # Delete the old image files from the filesystem
+    # #     if old_profile_pic_path and profile_pic_modified:
+    # #         if os.path.exists(old_profile_pic_path):
+    # #             os.remove(old_profile_pic_path)
+    # #     if old_cover_pic_path and cover_pic_modified:
+    # #         if os.path.exists(old_cover_pic_path):
+    # #             os.remove(old_cover_pic_path)
 
     def get_friends(self):
         """Return a QuerySet of friends of the user"""
