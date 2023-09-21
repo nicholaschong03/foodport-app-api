@@ -240,8 +240,7 @@ class User(AbstractBaseUser, PermissionsMixin):
             cover_pic_modified = True
 
         # Call the "real" save() method once if any image field was modified
-        if profile_pic_modified or cover_pic_modified:
-            super(User, self).save(*args, **kwargs)
+        super(User, self).save(*args, **kwargs)
 
         # Delete the old image files from the filesystem
         if old_profile_pic_path and profile_pic_modified:
