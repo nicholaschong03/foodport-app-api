@@ -198,7 +198,6 @@ class User(AbstractBaseUser, PermissionsMixin):
 
         profile_pic_modified = False
         cover_pic_modified = False
-        super(User, self).save(*args, **kwargs)
 
         if self.userProfilePictureUrl and hasattr(self.userProfilePictureUrl, 'file'):
             # Open the image using Pillow
@@ -232,8 +231,8 @@ class User(AbstractBaseUser, PermissionsMixin):
 
             cover_pic_modified = True
 
+        # Call the "real" save() method once if any image field was modified
         if profile_pic_modified or cover_pic_modified:
-            # Call the "real" save() method once if any image field was modified
             super(User, self).save(*args, **kwargs)
 
         # Delete the old image files from the filesystem
@@ -349,11 +348,19 @@ class Post(models.Model):
         MenuItem, null=True, blank=True, related_name="posts", on_delete=models.SET_NULL)
 
     def save(self, *args, **kwargs):
-        # Call the "real" save() method
-        super(Post, self).save(*args, **kwargs)
+        # If the post is already in the database, retrieve the old image path
+        if self.pk:
+            try:
+                old_instance = Post.objects.get(pk=self.pk)
+                old_image_path = old_instance.postPhotoUrl.path
+            except Post.DoesNotExist:
+                old_image_path = None
+        else:
+            old_image_path = None
+
+        image_modified = False
 
         if self.postPhotoUrl and hasattr(self.postPhotoUrl, 'file'):
-
             # Open the image using Pillow
             img = Image.open(self.postPhotoUrl)
 
@@ -364,11 +371,17 @@ class Post(models.Model):
             buffer = BytesIO()
             img.save(fp=buffer, format="JPEG", quality=85)
             buffer.seek(0)
-            self.postPhotoUrl.save(
-                name=self.postPhotoUrl.name, content=ContentFile(buffer.read()), save=False)
+            self.postPhotoUrl.save(name=self.postPhotoUrl.name, content=ContentFile(buffer.read()), save=False)
 
-            # Call the "real" save() method again
-            super(Post, self).save(*args, **kwargs)
+            image_modified = True
+
+        # Call the parent class's save method only once, after all image modifications
+        super(Post, self).save(*args, **kwargs)
+
+        # If the image was modified, delete the old image file from the filesystem
+        if image_modified and old_image_path:
+            if os.path.exists(old_image_path):
+                os.remove(old_image_path)
 
     def __str__(self):
         return self.postReview
