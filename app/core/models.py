@@ -203,8 +203,12 @@ class User(AbstractBaseUser, PermissionsMixin):
             # Open the image using Pillow
             img = Image.open(self.userProfilePictureUrl)
 
+            aspect_ratio = img.height / img.width
+            new_width = 1290
+            new_height = int(new_width * aspect_ratio)
+
             # Resize the image.
-            img = img.resize((1290, 1290), Image.ANTIALIAS)
+            img = img.resize((new_width, new_height), Image.ANTIALIAS)
 
             # Save the image back to userProfilePictureUrl
             buffer = BytesIO()
@@ -217,10 +221,14 @@ class User(AbstractBaseUser, PermissionsMixin):
 
         if self.userCoverPictureUrl and hasattr(self.userCoverPictureUrl, 'file'):
             # Open the image using Pillow
-            img = Image.open(self.userCoverPictureUrl)
+            img = Image.open(self.userProfilePictureUrl)
+
+            aspect_ratio = img.height / img.width
+            new_width = 1290
+            new_height = int(new_width * aspect_ratio)
 
             # Resize the image.
-            img = img.resize((1290, 1290), Image.ANTIALIAS)
+            img = img.resize((new_width, new_height), Image.ANTIALIAS)
 
             # Save the image back to userCoverPictureUrl
             buffer = BytesIO()
@@ -364,8 +372,13 @@ class Post(models.Model):
             # Open the image using Pillow
             img = Image.open(self.postPhotoUrl)
 
+            # Calculate the aspect ratio
+            aspect_ratio = img.height / img.width
+            new_width = 1290
+            new_height = int(new_width * aspect_ratio)
+
             # Resize the image.
-            img = img.resize((1290, 1290), Image.ANTIALIAS)
+            img = img.resize((new_width, new_height), Image.ANTIALIAS)
 
             # Save the image back to postPhotoUrl
             buffer = BytesIO()
