@@ -142,113 +142,58 @@ class User(AbstractBaseUser, PermissionsMixin):
     userLongitude = models.DecimalField(
         max_digits=9, decimal_places=6, null=True, blank=True)
 
-    # def save(self, *args, **kwargs):
-    #     # Storing the old file paths before calling super().save()
-    #     if self.pk:
-    #         old_instance = User.objects.get(pk=self.pk)
-    #         old_profile_pic = old_instance.userProfilePictureUrl.path if old_instance.userProfilePictureUrl else None
-    #         old_cover_pic = old_instance.userCoverPictureUrl.path if old_instance.userCoverPictureUrl else None
-    #     else:
-    #         old_profile_pic = None
-    #         old_cover_pic = None
+    def save(self, *args, **kwargs):
+            # Store the old image paths before saving the new images
+            if self.pk:
+                old_instance = User.objects.get(pk=self.pk)
+                old_profile_pic_path = old_instance.userProfilePictureUrl.path if old_instance.userProfilePictureUrl else None
+                old_cover_pic_path = old_instance.userCoverPictureUrl.path if old_instance.userCoverPictureUrl else None
+            else:
+                old_profile_pic_path = None
+                old_cover_pic_path = None
+            profile_pic_modified = False
+            cover_pic_modified = False
+            if self.userProfilePictureUrl and hasattr(self.userProfilePictureUrl, 'file') and self.userProfilePictureUrl.file:
+                # Open the image using Pillow
+                img = Image.open(self.userProfilePictureUrl)
+                aspect_ratio = img.height / img.width
+                new_width = 1290
+                new_height = int(new_width * aspect_ratio)
+                # Resize the image.
+                img = img.resize((new_width, new_height), Image.ANTIALIAS)
+                # Save the image back to userProfilePictureUrl
+                buffer = BytesIO()
+                img.save(fp=buffer, format="JPEG", quality=85)
+                buffer.seek(0)
+                self.userProfilePictureUrl.save(
+                    name=self.userProfilePictureUrl.name, content=ContentFile(buffer.read()), save=False)
+                profile_pic_modified = True
+            if self.userCoverPictureUrl and hasattr(self.userCoverPictureUrl, 'file') and self.userCoverPictureUrl.file:
+                # Open the image using Pillow
+                img = Image.open(self.userCoverPictureUrl)
+                aspect_ratio = img.height / img.width
+                new_width = 1290
+                new_height = int(new_width * aspect_ratio)
+                # Resize the image.
+                img = img.resize((new_width, new_height), Image.ANTIALIAS)
+                # Save the image back to userCoverPictureUrl
+                buffer = BytesIO()
+                img.save(fp=buffer, format="JPEG", quality=85)
+                buffer.seek(0)
+                self.userCoverPictureUrl.save(
+                    name=self.userCoverPictureUrl.name, content=ContentFile(buffer.read()), save=False)
+                cover_pic_modified = True
+            # Call the "real" save() method once if any image field was modified
+            super(User, self).save(*args, **kwargs)
+            # Delete the old image files from the filesystem
+            if old_profile_pic_path and profile_pic_modified:
+                if os.path.exists(old_profile_pic_path):
+                    os.remove(old_profile_pic_path)
+            if old_cover_pic_path and cover_pic_modified:
+                if os.path.exists(old_cover_pic_path):
+                    os.remove(old_cover_pic_path)
 
-    #     super().save(*args, **kwargs)
 
-    #     # Handle UserProfilePictureUrl
-    #     if self.userProfilePictureUrl and hasattr(self.userProfilePictureUrl, 'file'):
-    #         # Deleting the old file if it exists
-    #         if old_profile_pic and os.path.exists(old_profile_pic):
-    #             os.remove(old_profile_pic)
-
-    #         # Your existing image handling code
-    #         img = Image.open(self.userProfilePictureUrl)
-    #         img = img.convert('RGB')
-    #         img = img.resize((800, 800), Image.ANTIALIAS)
-    #         buffer = BytesIO()
-    #         img.save(buffer, format='JPEG', quality=85)
-    #         buffer.seek(0)
-    #         self.userProfilePictureUrl.save(name=self.userProfilePictureUrl.name, content=ContentFile(buffer.read()), save=False)
-
-    #     # Handle UserCoverPictureUrl
-    #     if self.userCoverPictureUrl and hasattr(self.userCoverPictureUrl, 'file'):
-    #         # Deleting the old file if it exists
-    #         if old_cover_pic and os.path.exists(old_cover_pic):
-    #             os.remove(old_cover_pic)
-
-    #         # Your existing image handling code
-    #         img = Image.open(self.userCoverPictureUrl)
-    #         img = img.convert('RGB')
-    #         img = img.resize((800, 800), Image.ANTIALIAS)
-    #         buffer = BytesIO()
-    #         img.save(buffer, format='JPEG', quality=85)
-    #         buffer.seek(0)
-    #         self.userCoverPictureUrl.save(name=self.userCoverPictureUrl.name, content=ContentFile(buffer.read()), save=False)
-
-    #     super().save(*args, **kwargs)
-
-    # # def save(self, *args, **kwargs):
-    # #     # Store the old image paths before saving the new images
-    # #     if self.pk:
-    # #         old_instance = User.objects.get(pk=self.pk)
-    # #         old_profile_pic_path = old_instance.userProfilePictureUrl.path if old_instance.userProfilePictureUrl else None
-    # #         old_cover_pic_path = old_instance.userCoverPictureUrl.path if old_instance.userCoverPictureUrl else None
-    # #     else:
-    # #         old_profile_pic_path = None
-    # #         old_cover_pic_path = None
-
-    # #     profile_pic_modified = False
-    # #     cover_pic_modified = False
-
-    # #     if self.userProfilePictureUrl and hasattr(self.userProfilePictureUrl, 'file'):
-    # #         # Open the image using Pillow
-    # #         img = Image.open(self.userProfilePictureUrl)
-
-    # #         aspect_ratio = img.height / img.width
-    # #         new_width = 1290
-    # #         new_height = int(new_width * aspect_ratio)
-
-    # #         # Resize the image.
-    # #         img = img.resize((new_width, new_height), Image.ANTIALIAS)
-
-    # #         # Save the image back to userProfilePictureUrl
-    # #         buffer = BytesIO()
-    # #         img.save(fp=buffer, format="JPEG", quality=85)
-    # #         buffer.seek(0)
-    # #         self.userProfilePictureUrl.save(
-    # #             name=self.userProfilePictureUrl.name, content=ContentFile(buffer.read()), save=False)
-
-    # #         profile_pic_modified = True
-
-    # #     if self.userCoverPictureUrl and hasattr(self.userCoverPictureUrl, 'file'):
-    # #         # Open the image using Pillow
-    # #         img = Image.open(self.userProfilePictureUrl)
-
-    # #         aspect_ratio = img.height / img.width
-    # #         new_width = 1290
-    # #         new_height = int(new_width * aspect_ratio)
-
-    # #         # Resize the image.
-    # #         img = img.resize((new_width, new_height), Image.ANTIALIAS)
-
-    # #         # Save the image back to userCoverPictureUrl
-    # #         buffer = BytesIO()
-    # #         img.save(fp=buffer, format="JPEG", quality=85)
-    # #         buffer.seek(0)
-    # #         self.userCoverPictureUrl.save(name=self.userCoverPictureUrl.name, content=ContentFile(
-    # #             buffer.read()), save=False)  # Corrected this line
-
-    # #         cover_pic_modified = True
-
-    # #     # Call the "real" save() method once if any image field was modified
-    # #     super(User, self).save(*args, **kwargs)
-
-    # #     # Delete the old image files from the filesystem
-    # #     if old_profile_pic_path and profile_pic_modified:
-    # #         if os.path.exists(old_profile_pic_path):
-    # #             os.remove(old_profile_pic_path)
-    # #     if old_cover_pic_path and cover_pic_modified:
-    # #         if os.path.exists(old_cover_pic_path):
-    # #             os.remove(old_cover_pic_path)
 
     def get_friends(self):
         """Return a QuerySet of friends of the user"""
@@ -263,7 +208,9 @@ class Business(models.Model):
     "Business object"
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
     )
     businessName = models.CharField(max_length=255)
     businessOperatingLocation = models.JSONField(null=True, blank=True)
@@ -293,15 +240,16 @@ class MenuItem(models.Model):
     """Menu object"""
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        null=True
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
     )
     name = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     dishInfoContributor = models.JSONField(default=dict, blank=True, null=True)
     sellerId = models.IntegerField(null=True, blank=True)
     business = models.ForeignKey(
-        Business, on_delete=models.SET_NULL, null=True, blank=True, related_name="menu_items")
+        Business, on_delete=models.CASCADE, related_name="menu_items", null=True)
     category = models.CharField(max_length=255)
 
     basicIngredient = models.JSONField(default=list, blank=True, null=True)
@@ -355,45 +303,39 @@ class Post(models.Model):
         MenuItem, null=True, blank=True, related_name="posts", on_delete=models.SET_NULL)
 
     def save(self, *args, **kwargs):
-        # If the post is already in the database, retrieve the old image path
-        if self.pk:
-            try:
-                old_instance = Post.objects.get(pk=self.pk)
-                old_image_path = old_instance.postPhotoUrl.path
-            except Post.DoesNotExist:
+            # If the post is already in the database, retrieve the old image path
+    # If the post is already in the database, retrieve the old image path
+            if self.pk:
+                try:
+                    old_instance = Post.objects.get(pk=self.pk)
+                    old_image_path = old_instance.postPhotoUrl.path if old_instance.postPhotoUrl else None
+                except Post.DoesNotExist:
+                    old_image_path = None
+            else:
                 old_image_path = None
-        else:
-            old_image_path = None
 
-        image_modified = False
-
-        if self.postPhotoUrl and hasattr(self.postPhotoUrl, 'file'):
-            # Open the image using Pillow
-            img = Image.open(self.postPhotoUrl)
-
-            # Calculate the aspect ratio
-            aspect_ratio = img.height / img.width
-            new_width = 1290
-            new_height = int(new_width * aspect_ratio)
-
-            # Resize the image.
-            img = img.resize((new_width, new_height), Image.ANTIALIAS)
-
-            # Save the image back to postPhotoUrl
-            buffer = BytesIO()
-            img.save(fp=buffer, format="JPEG", quality=85)
-            buffer.seek(0)
-            self.postPhotoUrl.save(name=self.postPhotoUrl.name, content=ContentFile(buffer.read()), save=False)
-
-            image_modified = True
-
-        # Call the parent class's save method only once, after all image modifications
-        super(Post, self).save(*args, **kwargs)
-
-        # If the image was modified, delete the old image file from the filesystem
-        if image_modified and old_image_path:
-            if os.path.exists(old_image_path):
-                os.remove(old_image_path)
+            image_modified = False
+            if self.postPhotoUrl and hasattr(self.postPhotoUrl, 'file'):
+                # Open the image using Pillow
+                img = Image.open(self.postPhotoUrl)
+                # Calculate the aspect ratio
+                aspect_ratio = img.height / img.width
+                new_width = 1290
+                new_height = int(new_width * aspect_ratio)
+                # Resize the image.
+                img = img.resize((new_width, new_height), Image.ANTIALIAS)
+                # Save the image back to postPhotoUrl
+                buffer = BytesIO()
+                img.save(fp=buffer, format="JPEG", quality=85)
+                buffer.seek(0)
+                self.postPhotoUrl.save(name=self.postPhotoUrl.name, content=ContentFile(buffer.read()), save=False)
+                image_modified = True
+            # Call the parent class's save method only once, after all image modifications
+            super(Post, self).save(*args, **kwargs)
+            # If the image was modified, delete the old image file from the filesystem
+            if image_modified and old_image_path:
+                if os.path.exists(old_image_path):
+                    os.remove(old_image_path)
 
     def __str__(self):
         return self.postReview

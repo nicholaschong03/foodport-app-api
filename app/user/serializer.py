@@ -87,8 +87,8 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_userPostId(self,obj):
         """Method to get the list of postId related to the user"""
-        posts = Post.objects.filter(user=obj)
-        return [post.id for post in posts]
+        return list(Post.objects.filter(user=obj).values_list('id', flat=True))
+
 
     def get_userFollowerCount(self, obj):
         return obj.followers.count()

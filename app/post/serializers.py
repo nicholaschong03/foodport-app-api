@@ -62,7 +62,6 @@ class PostSerializer(serializers.ModelSerializer):
             "postSaveCount",
             "postShareCount",
             "isSaved",
-            "menuItemId",
             "menuItem",
 
         ]
