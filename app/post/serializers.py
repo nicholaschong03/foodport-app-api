@@ -26,6 +26,7 @@ class PostSerializer(serializers.ModelSerializer):
     postSaveCount = serializers.SerializerMethodField()
     postShareCount = serializers.SerializerMethodField()
     isSaved = serializers.SerializerMethodField()
+    menuItemId = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
@@ -61,6 +62,7 @@ class PostSerializer(serializers.ModelSerializer):
             "postSaveCount",
             "postShareCount",
             "isSaved",
+            "menuItemId",
             "menuItem",
 
         ]
@@ -157,6 +159,14 @@ class PostSerializer(serializers.ModelSerializer):
             if postSave:
                 return postSave.postIsSaved
         return False
+
+    def get_menuItemId(self, obj):
+        try:
+            menu_item = obj.menuItem
+            return menu_item.id
+        except AttributeError:
+            return None
+
 
 class PostDistanceSerializer(PostSerializer):
     """Serializer for nearbyPostListView"""
